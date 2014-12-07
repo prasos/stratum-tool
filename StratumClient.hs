@@ -88,3 +88,20 @@ queryStratum StratumConn{..} method params = do
                               ]
   B.hPut h "\n"
   atomically $ takeTMVar out
+
+-- |Registers a listener for given channel name
+stratumChan :: StratumConn -> String -> IO (TChan Value)
+stratumChan StratumConn{..} name = atomically $ do
+  m <- readTVar channels
+  case M.lookup name m of
+    Just bc -> dupTChan bc
+    Nothing -> do
+      bc <- newBroadcastTChan
+      modifyTVar channels $ M.insert name bc
+      dupTChan bc
+
+-- |Helper for printing channel output
+foreverDump :: Show a => TChan a -> IO b
+foreverDump chan = forever $ do
+  a <- atomically $ readTChan chan
+  print a
