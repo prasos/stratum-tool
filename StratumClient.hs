@@ -75,7 +75,7 @@ takeId var = do
   return i
 
 -- |Send request to Stratum server and wait for response
-queryStratum :: (ToJSON a, ToJSON b) => StratumConn -> a -> b -> IO Value
+queryStratum :: StratumConn -> String -> [String] -> IO Value
 queryStratum StratumConn{..} method params = do
   out <- newEmptyTMVarIO
   i <- atomically $ do
