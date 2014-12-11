@@ -75,7 +75,7 @@ takeId var = do
   return i
 
 -- |Send request to Stratum server and wait for response
-queryStratum :: StratumConn -> String -> [String] -> IO Value
+queryStratum :: FromJSON a => StratumConn -> String -> [String] -> IO a
 queryStratum StratumConn{..} method params = do
   out <- newEmptyTMVarIO
   i <- atomically $ do
@@ -87,7 +87,10 @@ queryStratum StratumConn{..} method params = do
                               , "params" .= params
                               ]
   B.hPut h "\n"
-  atomically $ takeTMVar out
+  value <- atomically $ takeTMVar out
+  case fromJSON value of
+    Error s -> fail s
+    Success a -> return a
 
 -- |Registers a listener for given channel name
 stratumChan :: StratumConn -> String -> IO (TChan Value)
@@ -105,3 +108,8 @@ foreverDump :: Show a => TChan a -> IO b
 foreverDump chan = forever $ do
   a <- atomically $ readTChan chan
   print a
+
+-- |Helper for ignoring JSON output (asks for a Value so it will
+-- success and throw it away if the returned JSON is valid)
+ignoreJSON :: Value -> IO ()
+ignoreJSON _ = return ()
