@@ -24,11 +24,13 @@ data StratumConn = StratumConn { sender    :: TChan ByteString
                                , nextSeq   :: TVar Int
                                }
 
-data Response = Reply Int Value | Push String Value deriving (Show)
+data Response = Reply Int (Either String Value) | Push String Value deriving (Show)
 
 instance FromJSON Response where
-  parseJSON (Object o) = (Reply <$> o .: "id" <*> o .: "result") <|>
+  parseJSON (Object o) = (Reply <$> o .: "id" <*> (Right <$> o .: "result")) <|>
+                         (Reply <$> o .: "id" <*> (Left <$> o .: "error")) <|>
                          (Push <$> o .: "method" <*> o .: "params")
+
 
 connectStratum :: HostName -> PortNumber -> IO StratumConn
 connectStratum host port = do
@@ -43,10 +45,12 @@ connectStratum host port = do
     case eitherDecodeStrict json of
       Left e -> hPutStr stderr $ "JSON parsing error: " ++ e
       -- Send reply to the request sender
-      Right (Reply i v) -> do
+      Right (Reply i payload) -> do
         mbF <- atomically $ listenerMapTake listeners i
         case mbF of
-          Just f -> f v
+          Just f -> case payload of
+            Right v -> f v
+            Left e  -> f $ error e
           Nothing -> hPutStr stderr "Unknown ID in server message"
       -- Push the message to a subscription channel
       Right (Push k v) -> atomically $ channelMapPut channels k v
