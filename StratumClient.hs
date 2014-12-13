@@ -14,11 +14,11 @@ import Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as M
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as BL
 
 type StratumQuery = Value -> IO ()
 
-data StratumConn = StratumConn { h         :: Handle
+data StratumConn = StratumConn { sender    :: TChan ByteString
                                , listeners :: TVar (IntMap StratumQuery)
                                , channels  :: TVar (Map String (TChan Value))
                                , nextSeq   :: TVar Int
@@ -34,8 +34,10 @@ connectStratum :: HostName -> PortNumber -> IO StratumConn
 connectStratum host port = do
   h <- connectTo host $ PortNumber port
   hSetBuffering h LineBuffering
+  sender <- newTChanIO
   listeners <- newTVarIO $ I.empty
   channels <- newTVarIO $ M.empty
+  -- Thread for parsing output
   forkIO $ forever $ do
     json <- B.hGetLine h
     case eitherDecodeStrict json of
@@ -48,6 +50,11 @@ connectStratum host port = do
           Nothing -> hPutStr stderr "Unknown ID in server message"
       -- Push the message to a subscription channel
       Right (Push k v) -> atomically $ channelMapPut channels k v
+  -- Thread for sending data
+  forkIO $ forever $ do
+    bs <- atomically $ readTChan sender
+    BL.hPut h $ bs `BL.snoc` '\n'
+    hFlush h
   nextSeq <- newTVarIO 0
   return StratumConn{..}
 
@@ -78,15 +85,13 @@ takeId var = do
 queryStratum :: FromJSON a => StratumConn -> String -> [String] -> IO a
 queryStratum StratumConn{..} method params = do
   out <- newEmptyTMVarIO
-  i <- atomically $ do
+  atomically $ do
     i <- takeId nextSeq
     modifyTVar listeners $ I.insert i $ atomically . putTMVar out
-    return i
-  BL.hPut h $ encode $ object [ "id" .= i
-                              , "method" .= method
-                              , "params" .= params
-                              ]
-  B.hPut h "\n"
+    writeTChan sender $ encode $ object [ "id" .= i
+                                        , "method" .= method
+                                        , "params" .= params
+                                        ]
   value <- atomically $ takeTMVar out
   case fromJSON value of
     Error s -> fail s
