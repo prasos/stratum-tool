@@ -6,6 +6,7 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
 import Data.Aeson
+import Data.Aeson.Types
 import Network
 import System.IO
 import Data.IntMap.Lazy (IntMap)
@@ -86,8 +87,8 @@ takeId var = do
   return i
 
 -- |Send request to Stratum server and wait for response
-queryStratum :: FromJSON a => StratumConn -> String -> [String] -> IO a
-queryStratum StratumConn{..} method params = do
+queryStratumParse :: (Value -> Parser a) -> StratumConn -> String -> [String] -> IO a
+queryStratumParse p StratumConn{..} method params = do
   out <- newEmptyTMVarIO
   atomically $ do
     i <- takeId nextSeq
@@ -97,9 +98,17 @@ queryStratum StratumConn{..} method params = do
                                         , "params" .= params
                                         ]
   value <- atomically $ takeTMVar out
-  case fromJSON value of
+  case parse p value of
     Error s -> fail s
     Success a -> return a
+
+-- |Like queryStratumParse but use FromJSON to decide parser
+queryStratum :: FromJSON a => StratumConn -> String -> [String] -> IO a
+queryStratum = queryStratumParse parseJSON
+
+-- |Like queryStratumParse but doesn't even parse anything
+queryStratumValue :: StratumConn -> String -> [String] -> IO Value
+queryStratumValue = queryStratumParse return
 
 -- |Registers a listener for given channel name
 stratumChan :: StratumConn -> String -> IO (TChan Value)
@@ -117,8 +126,3 @@ foreverDump :: Show a => TChan a -> IO b
 foreverDump chan = forever $ do
   a <- atomically $ readTChan chan
   print a
-
--- |Helper for ignoring JSON output (asks for a Value so it will
--- success and throw it away if the returned JSON is valid)
-ignoreJSON :: Value -> IO ()
-ignoreJSON _ = return ()
