@@ -40,6 +40,7 @@ connectStratum host port = do
   sender <- newTChanIO
   listeners <- newTVarIO $ I.empty
   channels <- newTVarIO $ M.empty
+  nextSeq <- newTVarIO 0
   -- Thread for parsing output
   forkIO $ forever $ do
     json <- B.hGetLine h
@@ -60,7 +61,10 @@ connectStratum host port = do
     bs <- atomically $ readTChan sender
     BL.hPut h $ bs `BL.snoc` '\n'
     hFlush h
-  nextSeq <- newTVarIO 0
+  -- Thread for pinging
+  forkIO $ forever $ do
+    threadDelay 300000000
+    queryStratumValue StratumConn{..} "server.version" ["1.9.8", "0.9"]
   return StratumConn{..}
 
 -- |Take element from a transactional map
