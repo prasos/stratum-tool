@@ -4,8 +4,10 @@ module Main where
 import Control.Applicative
 import Control.Concurrent.Async (mapConcurrently)
 import Data.Aeson
+import Data.Aeson.Types
 import System.Console.CmdArgs.Implicit
 import qualified Data.ByteString.Lazy.Char8 as B
+import Data.String (fromString)
 import StratumClient
 
 data Args = Args { server   :: String
@@ -34,6 +36,14 @@ main = do
   Args{..} <- cmdArgs synopsis
   stratumConn <- connectStratum server $ fromIntegral port
   ans <- if multi
-         then toJSON <$> mapConcurrently (queryStratumValue stratumConn command . pure) params
+         then objectZip params <$>
+              mapConcurrently (queryStratumValue stratumConn command . pure) params
          else queryStratumValue stratumConn command params
   B.putStrLn $ encode ans
+
+-- |Pairs a given list of strings corresponding values to generate
+-- JSON object with string as a key.
+objectZip :: [String] -> [Value] -> Value
+objectZip ss vs = object $ zipWith toPair ss vs
+  where toPair :: String -> Value -> Pair
+        toPair s v = (fromString s, v)
