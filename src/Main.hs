@@ -2,6 +2,7 @@
 module Main where
 
 import Control.Applicative
+import Control.Concurrent.Async (mapConcurrently)
 import Data.Aeson
 import System.Console.CmdArgs.Implicit
 import qualified Data.ByteString.Lazy.Char8 as B
@@ -33,6 +34,6 @@ main = do
   Args{..} <- cmdArgs synopsis
   stratumConn <- connectStratum server $ fromIntegral port
   ans <- if multi
-         then toJSON <$> mapM (queryStratumValue stratumConn command . pure) params
+         then toJSON <$> mapConcurrently (queryStratumValue stratumConn command . pure) params
          else queryStratumValue stratumConn command params
   B.putStrLn $ encode ans
