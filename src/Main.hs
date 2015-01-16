@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
 module Main where
 
+import Control.Applicative
 import Data.Aeson
 import System.Console.CmdArgs.Implicit
 import qualified Data.ByteString.Lazy.Char8 as B
@@ -10,6 +11,7 @@ data Args = Args { server   :: String
                  , port     :: Int
                  , command  :: String
                  , params   :: [String]
+                 , multi    :: Bool
                  } deriving (Show, Data, Typeable)
 
 synopsis = Args { server = "electrum.bittiraha.fi" &=
@@ -17,6 +19,10 @@ synopsis = Args { server = "electrum.bittiraha.fi" &=
                 , port = 50001 &= help "Electrum port (default: 50001)"
                 , command = def &= argPos 0 &= typ "COMMAND"
                 , params = def &= args &= typ "PARAMS"
+                , multi = def &=
+                          help "Instead of passing multiple parameters for \
+                               \a single command, repeat command for each \
+                               \argument (default: false)"
                 }
            &= program "stratumtool"
            &= summary "StratumTool v0.0.1"
@@ -26,5 +32,7 @@ synopsis = Args { server = "electrum.bittiraha.fi" &=
 main = do
   Args{..} <- cmdArgs synopsis
   stratumConn <- connectStratum server $ fromIntegral port
-  ans <- queryStratum stratumConn command params
-  B.putStrLn $ encode (ans::Value)
+  ans <- if multi
+         then toJSON <$> mapM (queryStratumValue stratumConn command . pure) params
+         else queryStratumValue stratumConn command params
+  B.putStrLn $ encode ans
