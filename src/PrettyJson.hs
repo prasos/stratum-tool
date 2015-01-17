@@ -3,12 +3,12 @@ module PrettyJson where
 
 import Data.Aeson
 import Data.Aeson.Types
-import Data.Text.Encoding
 import Data.ByteString.Lazy.Builder -- Remove Lazy when using newer bytestring lib
+import qualified Data.HashMap.Strict as H
 import Data.Monoid
 import Data.Text (Text)
+import Data.Text.Encoding
 import qualified Data.Vector as V
-import qualified Data.HashMap.Strict as H
 
 breadcrumbs :: Value -> Builder
 breadcrumbs = breadcrumbs' True mempty mempty
