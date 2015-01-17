@@ -21,25 +21,23 @@ data Args = Args { server   :: String
                  , raw      :: Bool
                  } deriving (Show, Data, Typeable)
 
-synopsis = Args { server = "electrum.bittiraha.fi" &=
-                           help "Electrum server address \
-                                \(electrum.bittiraha.fi)" &=
-                           typ "HOST"
-                , port = 50001 &= help "Electrum port (50001)"
-                , command = def &= argPos 0 &= typ "COMMAND"
-                , params = def &= args &= typ "PARAMS"
-                , multi = def &=
-                          help "Instead of passing multiple parameters for \
-                               \a single command, repeat command for each \
-                               \argument"
-                , raw = def &=
-                        help "Output as raw JSON instead of JSON breadcrumbs \
-                             \format"
-                }
-           &= program "stratumtool"
-           &= summary "StratumTool v0.0.1"
-           &= help ("Connect to Electrum server via Stratum protocol and " ++
-                    "allows querying wallet balances etc.")
+synopsis =
+  Args { server = "electrum.bittiraha.fi" &=
+                  help "Electrum server address (electrum.bittiraha.fi)" &=
+                  typ "HOST"
+       , port = 50001 &= help "Electrum port (50001)"
+       , command = def &= argPos 0 &= typ "COMMAND"
+       , params = def &= args &= typ "PARAMS"
+       , multi = def &=
+                 help "Instead of passing multiple parameters for a single \
+                      \command, repeat command for each argument"
+       , raw = def &=
+               help "Output as raw JSON instead of JSON breadcrumbs format"
+       }
+  &= program "stratumtool"
+  &= summary "StratumTool v0.0.1"
+  &= help "Connect to Electrum server via Stratum protocol and \
+          \allows querying wallet balances etc."
 
 main = do
   Args{..} <- cmdArgs synopsis
