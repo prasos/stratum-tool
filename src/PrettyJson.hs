@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |Pretty-print JSON as human-readable breadcrumbs.
 module PrettyJson where
 
@@ -19,22 +20,22 @@ breadcrumbs' start path b v = case v of
   Array a -> V.ifoldl (arrayBuilder path) b a
   _ -> b <>
        path <>
-       string7 " = " <>
+       byteString " = " <>
        lazyByteString (encode v) <>
-       char7 '\n'
+       byteString "\n"
 
 objBuilder :: Bool -> Builder -> Builder -> Text -> Value -> Builder
 objBuilder start path b k v = breadcrumbs' False newPath b v
   where newPath = path <>
-                  (if start then mempty else char7 '.') <>
+                  (if start then mempty else byteString ".") <>
                   buildText k
 
 arrayBuilder :: Builder -> Builder -> Int -> Value -> Builder
 arrayBuilder path b i v = breadcrumbs' False newPath b v
   where newPath = path <>
-                  char7 '[' <>
+                  byteString "[" <>
                   string7 (show i) <>
-                  char7 ']'
+                  byteString "]"
 
 buildText :: Text -> Builder
 buildText = byteString . encodeUtf8
