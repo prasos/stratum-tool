@@ -34,7 +34,7 @@ synopsis =
        , raw = def &=
                help "Output as raw JSON instead of JSON breadcrumbs format"
        }
-  &= program "stratumtool"
+  &= program "stratum-tool"
   &= summary "StratumTool v0.0.1"
   &= help "Connect to Electrum server via Stratum protocol and \
           \allows querying wallet balances etc."
