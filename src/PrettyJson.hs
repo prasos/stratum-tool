@@ -4,7 +4,7 @@ module PrettyJson where
 
 import Data.Aeson
 import Data.Aeson.Types
-import Data.ByteString.Lazy.Builder -- Remove Lazy when using newer bytestring lib
+import Data.ByteString.Builder
 import qualified Data.HashMap.Strict as H
 import Data.Monoid
 import Data.Text (Text)
