@@ -1,6 +1,11 @@
 {-# LANGUAGE RecordWildCards, OverloadedStrings #-}
 module StratumClient where
 
+-- NB! Data.IntMap.Lazy and Data.Map.Lazy are imported without Lazy
+-- because they default to Lazy and the naming has changed in recent
+-- versions of containers. By doing this we maintain
+-- backwards-compatibility
+
 import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM
@@ -9,10 +14,10 @@ import Data.Aeson
 import Data.Aeson.Types
 import Network
 import System.IO
-import Data.IntMap.Lazy (IntMap)
-import qualified Data.IntMap.Lazy as I
-import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as M
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as I
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -44,10 +49,10 @@ connectStratum host port = do
   -- Thread for parsing output
   forkIO $ forever $ do
     json <- B.hGetLine h
-    case eitherDecodeStrict json of
-      Left e -> hPutStr stderr $ "JSON parsing error: " ++ e
+    case decode (BL.fromChunks [json]) of
+      Nothing -> hPutStr stderr $ "JSON parsing error"
       -- Send reply to the request sender
-      Right (Reply i payload) -> do
+      Just (Reply i payload) -> do
         mbF <- atomically $ listenerMapTake listeners i
         case mbF of
           Just f -> case payload of
@@ -55,7 +60,7 @@ connectStratum host port = do
             Left e  -> f $ error e
           Nothing -> hPutStr stderr "Unknown ID in server message"
       -- Push the message to a subscription channel
-      Right (Push k v) -> atomically $ channelMapPut channels k v
+      Just (Push k v) -> atomically $ channelMapPut channels k v
   -- Thread for sending data
   forkIO $ forever $ do
     bs <- atomically $ readTChan sender
