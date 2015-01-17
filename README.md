@@ -65,14 +65,24 @@ When using `--json` option the output format is JSON:
 
 StratumTool is written in [Haskell](http://en.wikipedia.org/wiki/Haskell_%28programming_language%29) and can be built using Cabal:
 
-	cabal update
-	cabal install
-
 If you are running Debian or Ubuntu then you can install the
 dependencies using *apt* first which make the installation faster and also more
 robust (we like to avoid nasty dependency hell).
 
-	TODO
+	sudo apt-get install cabal-install ghc libghc-aeson-dev libghc-stm-dev libghc-cmdargs-dev libghc-network-dev
+
+The following libraries may be fetched over Cabal so it's not fatal if
+you don't have them but if your distribution has them then it's better
+to use them, too:
+
+	sudo apt get install libghc-async-dev
+
+Then install via cabal
+
+	cabal update
+	cabal install
+
+The binaries will be placed at `~/.cabal/bin`
 
 ## License
 
