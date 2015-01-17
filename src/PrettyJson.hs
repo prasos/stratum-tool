@@ -20,7 +20,7 @@ breadcrumbs' start path b v = case v of
   Array a -> V.ifoldl (arrayBuilder path) b a
   _ -> b <>
        path <>
-       byteString " = " <>
+       (if start then mempty else byteString " = ") <>
        lazyByteString (encode v) <>
        byteString "\n"
 
