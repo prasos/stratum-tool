@@ -18,13 +18,13 @@ command supported by
 
 Command | Arguments | Synopsis
 ------- | --------- | --------
-blockchain.address.get\_history | Bitcoin address | Lists transactions with TxOuts to given address
-blockchain.address.get\_balance | Bitcoin address | Lists both unconfirmed and confirmed balances of given address
-blockchain.address.listunspent | Bitcoin address | List unspent transactions of given address
-blockchain.utxo.get_address | Transaction hash and index | Get target address of given transaction hash output
-blockchain.transaction.broadcast | Hex encoded transaction | Broadcast given transaction
-blockchain.transaction.get | Transaction hash | Retrieves given transaction in hex encoded format
-blockchain.block.get\_header | Block hash | Retrieves given block headers
+`blockchain.address.get_history` | Bitcoin address | Lists transactions with TxOuts to given address
+`blockchain.address.get_balance` | Bitcoin address | Lists both unconfirmed and confirmed balances of given address
+`blockchain.address.listunspent` | Bitcoin address | List unspent transactions of given address
+`blockchain.utxo.get_address` | Transaction hash and index | Get target address of given transaction hash output
+`blockchain.transaction.broadcast` | Hex encoded transaction | Broadcast given transaction
+`blockchain.transaction.get` | Transaction hash | Retrieves given transaction in hex encoded format
+`blockchain.block.get_header` | Block hash | Retrieves given block headers
 
 All command with only single argument may be used in `--multi` mode
 which allows running the command with multiple data on single
