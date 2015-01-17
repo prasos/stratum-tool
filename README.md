@@ -63,7 +63,7 @@ For more information, see `stratum-tool --help`
 
 ## Compiling
 
-StratumTool is written in Haskell and can be built using Cabal:
+StratumTool is written in [Haskell](http://en.wikipedia.org/wiki/Haskell_%28programming_language%29) and can be built using Cabal:
 
 	cabal update
 	cabal install
@@ -95,3 +95,7 @@ Bug reports and feature requests are welcome via
 [GitHub issues](https://github.com/zouppen/stratum-tool/issues). You
 can also contact the author via e-mail address joel.lehtonen@koodilehto.fi.
 
+If you find this product useful you can show your support to
+Kryptoradio project
+([(1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5](bitcoin:1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5))
+or buy some stuff from [BTC Store](https://btcstore.eu/). :-)
