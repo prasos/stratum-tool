@@ -56,7 +56,7 @@ The output depends on output formatting and Stratum command. By default the outp
 	1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5.unconfirmed = 0
 	1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5.confirmed = 71286480
 
-When using `--raw` option the output format is JSON:
+When using `--json` option the output format is JSON:
 
 	$ stratum-tool -r -m blockchain.address.get_balance 1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5 1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z
 	{"1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z":{"unconfirmed":0,"confirmed":2317254},"1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5":{"unconfirmed":0,"confirmed":71286480}}

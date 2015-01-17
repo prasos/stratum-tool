@@ -18,7 +18,7 @@ data Args = Args { server   :: String
                  , command  :: String
                  , params   :: [String]
                  , multi    :: Bool
-                 , raw      :: Bool
+                 , json     :: Bool
                  } deriving (Show, Data, Typeable)
 
 synopsis =
@@ -31,8 +31,8 @@ synopsis =
        , multi = def &=
                  help "Instead of passing multiple parameters for a single \
                       \command, repeat command for each argument"
-       , raw = def &=
-               help "Output as raw JSON instead of JSON breadcrumbs format"
+       , json = def &=
+                help "Output as raw JSON instead of JSON breadcrumbs format"
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.1"
@@ -46,7 +46,7 @@ main = do
          then objectZip params <$>
               mapConcurrently (queryStratumValue stratumConn command . pure) params
          else queryStratumValue stratumConn command params
-  hPutBuilder stdout $ if raw
+  hPutBuilder stdout $ if json
                        then lazyByteString (encode ans) <> byteString "\n"
                        else breadcrumbs ans
 
