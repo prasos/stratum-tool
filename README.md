@@ -44,6 +44,8 @@ Single command with multiple arguments:
 
 	stratum-tool blockchain.utxo.get_address 7e791721c61415d26966ab8530ffd550a045ad1b79ca870a4eca14f57b6a5b8c 1
 
+For more information, see `stratum-tool --help`
+
 ## Output format
 
 The output depends on output formatting and Stratum command. By default the output format is JSON in breadcrumbs format which is useful for shell scripts and humans:
@@ -58,8 +60,6 @@ When using `--raw` option the output format is JSON:
 
 	$ stratum-tool -r -m blockchain.address.get_balance 1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5 1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z
 	{"1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z":{"unconfirmed":0,"confirmed":2317254},"1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5":{"unconfirmed":0,"confirmed":71286480}}
-
-For more information, see `stratum-tool --help`
 
 ## Compiling
 
@@ -96,6 +96,5 @@ Bug reports and feature requests are welcome via
 can also contact the author via e-mail address joel.lehtonen@koodilehto.fi.
 
 If you find this product useful you can show your support to
-Kryptoradio project
-([(1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5](bitcoin:1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5))
-or buy some stuff from [BTC Store](https://btcstore.eu/). :-)
+Kryptoradio project (`1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5`) or buy some
+stuff from [BTC Store](https://btcstore.eu/). :-)
