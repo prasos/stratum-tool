@@ -1,8 +1,11 @@
 name:          stratum-tool
 version:       0.0.1
-synopsis:      StratumTool
+synopsis:      Client for Stratum protocol
 description:   Connects to Electrum server via Stratum protocol and
-	       allows querying wallet balances etc. in user friendly output format
+	       allows querying bitcoin wallet balances and other commands
+	       supported by the server. It supports the original JSON format
+	       in addition to shell script friendly JSON breadcrumbs format.
+	       output format.
 category:      Utils
 license:       AGPL-3
 license-file:  LICENSE

@@ -1,4 +1,4 @@
-Source: haskell-stratum-tool
+Source: stratum-tool
 Maintainer: Joel Lehtonen <joel.lehtonen@koodilehto.fi>
 Priority: optional
 Section: haskell
@@ -33,7 +33,7 @@ Build-Depends-Indep: ghc-doc
                      , libghc-text-doc (>= 0.11.2.0)
                      , libghc-vector-doc
 
-Package: haskell-stratum-tool-utils
+Package: stratum-tool
 Architecture: any
 Section: misc
 Depends: ${shlibs:Depends}
@@ -44,9 +44,12 @@ Suggests: ${haskell:Suggests}
 Conflicts: ${haskell:Conflicts}
 Provides: ${haskell:Provides}
 Replaces: ${haskell:Replaces}
-Description: StratumTool
+Description: Client for Stratum protocol
  Connects to Electrum server via Stratum protocol and
- allows querying wallet balances etc. in user friendly output format
+ allows querying bitcoin wallet balances and other commands
+ supported by the server. It supports the original JSON format
+ in addition to shell script friendly JSON breadcrumbs format.
+ output format.
  .
   Author: Joel Lehtonen
   Upstream-Maintainer: joel.lehtonen@koodilehto.fi
