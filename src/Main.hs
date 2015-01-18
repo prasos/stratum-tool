@@ -4,7 +4,7 @@ module Main where
 import Control.Applicative
 import Control.Concurrent.Async (mapConcurrently)
 import Data.Aeson
-import Data.ByteString.Builder
+import Data.ByteString.Lazy.Builder
 import Data.Monoid
 import Data.String (fromString)
 import System.Console.CmdArgs.Implicit

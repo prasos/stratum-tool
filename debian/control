@@ -1,0 +1,54 @@
+Source: haskell-stratum-tool
+Maintainer: Joel Lehtonen <joel.lehtonen@koodilehto.fi>
+Priority: optional
+Section: haskell
+Build-Depends: debhelper (>= 7.0)
+               , haskell-devscripts (>= 0.8)
+               , cdbs
+               , ghc
+               , ghc-prof
+               , libghc-aeson-dev (>= 0.7.0.3)
+               , libghc-aeson-dev (<< 0.7.0.4)
+               , libghc-aeson-prof (>= 0.7.0.3)
+               , libghc-aeson-prof (<< 0.7.0.4)
+               , libghc-async-dev (>= 2.0.1.5)
+               , libghc-async-prof (>= 2.0.1.5)
+               , libghc-cmdargs-dev (>= 0.9.5)
+               , libghc-cmdargs-prof (>= 0.9.5)
+               , libghc-network-dev (>= 2.3.0.13)
+               , libghc-network-prof (>= 2.3.0.13)
+               , libghc-stm-dev (>= 2.4)
+               , libghc-stm-prof (>= 2.4)
+               , libghc-text-dev (>= 0.11.2.0)
+               , libghc-text-prof (>= 0.11.2.0)
+               , libghc-vector-dev
+               , libghc-vector-prof
+Build-Depends-Indep: ghc-doc
+                     , libghc-aeson-doc (>= 0.7.0.3)
+                     , libghc-aeson-doc (<< 0.7.0.4)
+                     , libghc-async-doc (>= 2.0.1.5)
+                     , libghc-cmdargs-doc (>= 0.9.5)
+                     , libghc-network-doc (>= 2.3.0.13)
+                     , libghc-stm-doc (>= 2.4)
+                     , libghc-text-doc (>= 0.11.2.0)
+                     , libghc-vector-doc
+
+Package: haskell-stratum-tool-utils
+Architecture: any
+Section: misc
+Depends: ${shlibs:Depends}
+         , ${haskell:Depends}
+         , ${misc:Depends}
+Recommends: ${haskell:Recommends}
+Suggests: ${haskell:Suggests}
+Conflicts: ${haskell:Conflicts}
+Provides: ${haskell:Provides}
+Replaces: ${haskell:Replaces}
+Description: StratumTool
+ Connects to Electrum server via Stratum protocol and
+ allows querying wallet balances etc. in user friendly output format
+ .
+  Author: Joel Lehtonen
+  Upstream-Maintainer: joel.lehtonen@koodilehto.fi
+ .
+ Files associated with the stratum-tool package.

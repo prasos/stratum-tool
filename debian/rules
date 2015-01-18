@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+DEB_CABAL_PACKAGE = stratum-tool
+HC = ghc
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/hlibrary.mk
+
+build/haskell-stratum-tool-utils:: build-$(HC)-stamp
