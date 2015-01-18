@@ -29,6 +29,5 @@ executable stratum-tool
     text >= 0.11.2.0,
     -- This will ensure Builder support in old environments
     bytestring-builder >= 0.10.4.0.1,
-    -- Any version of these will do because aeson will restrict it anyway
-    unordered-containers,
+    -- Any version of vector do because aeson will restrict it anyway
     vector

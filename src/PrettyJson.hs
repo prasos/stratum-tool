@@ -5,7 +5,7 @@ module PrettyJson where
 import Data.Aeson
 import Data.Aeson.Types
 import Data.ByteString.Builder
-import qualified Data.HashMap.Strict as H
+import qualified Data.Map as M
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Encoding
@@ -16,7 +16,7 @@ breadcrumbs = breadcrumbs' True mempty mempty
 
 breadcrumbs' :: Bool -> Builder -> Builder -> Value -> Builder
 breadcrumbs' start path b v = case v of
-  Object o -> H.foldlWithKey' (objBuilder start path) b o
+  Object o -> M.foldlWithKey (objBuilder start path) b $ takeJSON $ Object o
   Array a -> V.ifoldl (arrayBuilder path) b a
   _ -> b <>
        path <>
@@ -39,3 +39,10 @@ arrayBuilder path b i v = breadcrumbs' False newPath b v
 
 buildText :: Text -> Builder
 buildText = byteString . encodeUtf8
+
+-- |Simple wrapper for fromJSON in case you know what should be inside
+-- the JSON. Error is raised if types are not matching.
+takeJSON :: FromJSON a => Value -> a
+takeJSON x = case fromJSON x of
+  Error e   -> error e
+  Success a -> a
