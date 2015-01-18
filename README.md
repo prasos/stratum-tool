@@ -10,6 +10,16 @@ unspent outputs, or any other command supported by Electrum protocol.
 The internal implementation is more complete than the command-line
 interface so it is easy to expand to more complex queries in future.
 
+## Installation in Ubuntu
+
+There is PPA for Ubuntu 14.10 containing the most recent release:
+
+    sudo add-apt-repository ppa:zouppen/stratum-tool
+    sudo apt-get update
+    sudo apt-get install stratum-tool
+
+For other distributions, see section *Compiling* below.
+
 ## Useful commands
 
 Here is listing of useful commands. Of course you may use any other
@@ -60,14 +70,6 @@ When using `--json` option the output format is JSON:
 
 	$ stratum-tool -r -m blockchain.address.get_balance 1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5 1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z
 	{"1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z":{"unconfirmed":0,"confirmed":2317254},"1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5":{"unconfirmed":0,"confirmed":71286480}}
-
-## Installation in Ubuntu
-
-There is PPA for Ubuntu 14.10 containing the most recent release:
-
-    sudo add-apt-repository ppa:zouppen/stratum-tool
-    sudo apt-get update
-    sudo apt-get install stratum-tool
 
 ## Compiling
 
