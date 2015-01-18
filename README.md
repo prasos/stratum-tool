@@ -61,6 +61,14 @@ When using `--json` option the output format is JSON:
 	$ stratum-tool -r -m blockchain.address.get_balance 1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5 1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z
 	{"1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z":{"unconfirmed":0,"confirmed":2317254},"1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5":{"unconfirmed":0,"confirmed":71286480}}
 
+## Installation in Ubuntu
+
+There is PPA for Ubuntu 14.10 containing the most recent release:
+
+    sudo add-apt-repository ppa:zouppen/stratum-tool
+    sudo apt-get update
+    sudo apt-get install stratum-tool
+
 ## Compiling
 
 StratumTool is written in [Haskell](http://en.wikipedia.org/wiki/Haskell_%28programming_language%29) and can be built using Cabal:
