@@ -1,3 +1,10 @@
+stratum-tool (0.0.1-utopic5) utopic; urgency=low
+
+  * Make it use bytestring-builder again
+  * Support older aeson library versions as well
+
+ -- Joel Lehtonen <joel.lehtonen@koodilehto.fi>  Mon, 19 Jan 2015 03:24:15 +0200
+
 stratum-tool (0.0.1-ubuntu4) utopic; urgency=low
 
   * Redebianized in order to compile package with some real content

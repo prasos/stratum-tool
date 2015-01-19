@@ -4,7 +4,7 @@ module PrettyJson where
 
 import Data.Aeson
 import Data.Aeson.Types
-import Data.ByteString.Lazy.Builder
+import Data.ByteString.Builder
 import qualified Data.Map as M
 import Data.Monoid
 import Data.Text (Text)
