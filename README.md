@@ -10,7 +10,7 @@ unspent outputs, or any other command supported by Electrum protocol.
 The internal implementation is more complete than the command-line
 interface so it is easy to expand to more complex queries in future.
 
-## Installation in Ubuntu
+## Installation in Ubuntu and Debian
 
 There is PPA containing the most recent release for Ubuntu 12.04, 14.04, and 14.10. For other distributions, see section *Compiling* below.
 
@@ -19,6 +19,8 @@ To install:
     sudo add-apt-repository ppa:zouppen/stratum-tool
     sudo apt-get update
     sudo apt-get install stratum-tool
+
+For Debian 7 (wheezy) there is an experimental build available [at my site](http://zouppen.iki.fi/packages/stratum-tool/haskell-stratum-tool-utils_0.0.1-1~hackage1_amd64.deb).
 
 ## Useful commands
 
