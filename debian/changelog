@@ -1,3 +1,9 @@
+stratum-tool (0.0.1-utopic9) utopic; urgency=medium
+
+  * Relaxed versions of even more packages
+
+ -- Joel Lehtonen <joel.lehtonen@koodilehto.fi>  Mon, 19 Jan 2015 04:55:39 +0200
+
 stratum-tool (0.0.1-utopic8) utopic; urgency=medium
 
   * More relaxed version of aeson to make it Precise compatible
