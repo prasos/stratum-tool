@@ -1,3 +1,9 @@
+stratum-tool (0.0.1-utopic7) utopic; urgency=low
+
+  * Not so strict dependency on async. Helps compiling on trusty.
+
+ -- Joel Lehtonen <joel.lehtonen@koodilehto.fi>  Mon, 19 Jan 2015 04:31:11 +0200
+
 stratum-tool (0.0.1-utopic6) utopic; urgency=low
 
   * Update dependencies via cabal-debian
