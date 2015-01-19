@@ -1,2 +1,6 @@
 *~
 /dist
+/dist-ghc
+/Setup.hi
+/Setup.o
+/*-ghc-stamp
