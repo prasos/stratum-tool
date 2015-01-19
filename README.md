@@ -10,6 +10,16 @@ unspent outputs, or any other command supported by Electrum protocol.
 The internal implementation is more complete than the command-line
 interface so it is easy to expand to more complex queries in future.
 
+## Installation in Ubuntu
+
+There is PPA containing the most recent release for Ubuntu 12.04, 14.04, and 14.10. For other distributions, see section *Compiling* below.
+
+To install:
+
+    sudo add-apt-repository ppa:zouppen/stratum-tool
+    sudo apt-get update
+    sudo apt-get install stratum-tool
+
 ## Useful commands
 
 Here is listing of useful commands. Of course you may use any other
