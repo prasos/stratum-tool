@@ -1,3 +1,9 @@
+stratum-tool (0.0.1-utopic8) utopic; urgency=medium
+
+  * More relaxed version of aeson to make it Precise compatible
+
+ -- Joel Lehtonen <joel.lehtonen@koodilehto.fi>  Mon, 19 Jan 2015 04:44:04 +0200
+
 stratum-tool (0.0.1-utopic7) utopic; urgency=low
 
   * Not so strict dependency on async. Helps compiling on trusty.
