@@ -7,12 +7,12 @@ Build-Depends: debhelper (>= 7.0)
                , cdbs
                , ghc
                , ghc-prof
-               , libghc-aeson-dev (>= 0.7.0.3)
-               , libghc-aeson-dev (<< 0.7.0.4)
-               , libghc-aeson-prof (>= 0.7.0.3)
-               , libghc-aeson-prof (<< 0.7.0.4)
+               , libghc-aeson-dev (>= 0.6.0.2)
+               , libghc-aeson-prof (>= 0.6.0.2)
                , libghc-async-dev (>= 2.0.1.5)
                , libghc-async-prof (>= 2.0.1.5)
+               , libghc-bytestring-builder-dev (>= 0.10.4.0.1)
+               , libghc-bytestring-builder-prof (>= 0.10.4.0.1)
                , libghc-cmdargs-dev (>= 0.9.5)
                , libghc-cmdargs-prof (>= 0.9.5)
                , libghc-network-dev (>= 2.3.0.13)
@@ -24,9 +24,9 @@ Build-Depends: debhelper (>= 7.0)
                , libghc-vector-dev
                , libghc-vector-prof
 Build-Depends-Indep: ghc-doc
-                     , libghc-aeson-doc (>= 0.7.0.3)
-                     , libghc-aeson-doc (<< 0.7.0.4)
+                     , libghc-aeson-doc (>= 0.6.0.2)
                      , libghc-async-doc (>= 2.0.1.5)
+                     , libghc-bytestring-builder-doc (>= 0.10.4.0.1)
                      , libghc-cmdargs-doc (>= 0.9.5)
                      , libghc-network-doc (>= 2.3.0.13)
                      , libghc-stm-doc (>= 2.4)
