@@ -20,7 +20,7 @@ To install:
     sudo apt-get update
     sudo apt-get install stratum-tool
 
-For Debian 7 (wheezy) there is an experimental build available [at my site](http://zouppen.iki.fi/packages/stratum-tool/haskell-stratum-tool-utils_0.0.1-1~hackage1_amd64.deb).
+For Debian 7 (wheezy) there are experimental builds available [at my site](http://zouppen.iki.fi/packages/stratum-tool).
 
 ## Useful commands
 
