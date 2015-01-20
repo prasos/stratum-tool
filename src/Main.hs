@@ -3,6 +3,8 @@ module Main where
 
 import Control.Applicative
 import Control.Concurrent.Async (mapConcurrently)
+import Control.Concurrent.STM (atomically, readTChan)
+import Control.Monad (forever)
 import Data.Aeson
 import Data.ByteString.Builder
 import Data.Monoid
@@ -19,6 +21,7 @@ data Args = Args { server   :: String
                  , params   :: [String]
                  , multi    :: Bool
                  , json     :: Bool
+                 , follow   :: Bool
                  } deriving (Show, Data, Typeable)
 
 synopsis =
@@ -33,6 +36,9 @@ synopsis =
                       \command, repeat command for each argument"
        , json = def &=
                 help "Output as raw JSON instead of JSON breadcrumbs format"
+       , follow = def &=
+                  help "Subscribe to given addresses and run given command \
+                       \when something happens. Implies --multi."
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.1"
@@ -40,12 +46,40 @@ synopsis =
           \allows querying wallet balances etc."
 
 main = do
-  Args{..} <- cmdArgs synopsis
+  args@Args{..} <- cmdArgs synopsis
   stratumConn <- connectStratum server $ fromIntegral port
+  (if follow then trackAddresses else oneTime) stratumConn args
+
+-- |Track changes in given addresses and run the command when changes
+-- occur.
+trackAddresses :: StratumConn -> Args -> IO ()
+trackAddresses stratumConn Args{..} = do
+  chan <- stratumChan stratumConn "blockchain.address.subscribe"
+  -- Subscribe, but throw away results (only some hashes there)
+  mapConcurrently
+    (queryStratumValue stratumConn "blockchain.address.subscribe" . pure)
+    params
+  -- Print current state at first
+  oneTime stratumConn Args{multi=True,..}
+  -- Listen for changes
+  forever $ do
+    [addr,_] <- takeJSON <$> atomically (readTChan chan)
+    ans <- queryStratumValue stratumConn command [addr]
+    printValue json $ object [fromString addr .= ans]
+
+-- |Process single request. 
+oneTime :: StratumConn -> Args -> IO ()
+oneTime stratumConn Args{..} = do
   ans <- if multi
          then objectZip params <$>
               mapConcurrently (queryStratumValue stratumConn command . pure) params
          else queryStratumValue stratumConn command params
+  printValue json ans
+
+-- |Prints given JSON value to stdout. When `json` is True, then just
+-- print as encoded to JSON, otherwise breadcrumbs format is used.
+printValue :: Bool -> Value -> IO ()
+printValue json ans =
   hPutBuilder stdout $ if json
                        then lazyByteString (encode ans) <> byteString "\n"
                        else breadcrumbs ans
