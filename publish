@@ -6,7 +6,7 @@
 
 package () {
     echo Build number $1 for $2
-    sed -i "s/^\(haskell-stratum-tool ([.0-9]*\)[-a-z0-9]*) [a-z0-9]*/\1-$2$1) $2/" debian/changelog
+    sed -i "s/^\(haskell-stratum-tool ([.0-9]*\)[-a-z0-9]*) [a-z0-9]*/\1-$1$2) $2/" debian/changelog
     dpkg-buildpackage -S
 }
 
@@ -24,7 +24,7 @@ if test $# -ne 1; then
     exit 1
 fi
 
-if ! test -e debianize; then
+if ! test -e publish; then
     echo Must be run in the same directory as the package >&2
     exit 1
 fi
@@ -32,7 +32,7 @@ fi
 rm -rf debian/
 cabal-debian '--maintainer=Joel Lehtonen <joel.lehtonen@koodilehto.fi>' --default-package stratum-tool
 
-# Build for Launchpad 
+# Build for Launchpad
 reset_timer
 for DISTRO in precise trusty utopic; do package $1 $DISTRO; done
 find_new '*.changes' | xargs -0 dput ppa:zouppen/stratum-tool 
