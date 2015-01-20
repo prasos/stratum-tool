@@ -41,7 +41,7 @@ synopsis =
                        \when something happens. Implies --multi."
        }
   &= program "stratum-tool"
-  &= summary "StratumTool v0.0.1"
+  &= summary "StratumTool v0.0.2"
   &= help "Connect to Electrum server via Stratum protocol and \
           \allows querying wallet balances etc."
 

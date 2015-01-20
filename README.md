@@ -56,6 +56,13 @@ Single command with multiple arguments:
 
 	stratum-tool blockchain.utxo.get_address 7e791721c61415d26966ab8530ffd550a045ad1b79ca870a4eca14f57b6a5b8c 1
 
+Subscribe to given addresses and print their balances while they
+change. Output is forwarded to `ts` which inserts timestamp to the
+beginning. The addresses in this example are a collection of most
+active bitcoin addresses. (since v0.0.2):
+
+	stratum-tool -f blockchain.address.get_balance 1NxaBCFQwejSZbQfWcYNwgqML5wWoE3rK4 1bonesyw5998F8JuMtUeRfyR5j2en5MxN 1LuckyB5VGzdZLZSBZvw8DR17iiFCpST7L 1bonesU8XznVHnMCs5oDsPVRcQAqo1Hth | ts
+
 For more information, see `stratum-tool --help`
 
 ## Output format
