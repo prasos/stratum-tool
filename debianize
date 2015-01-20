@@ -1,0 +1,29 @@
+#!/bin/sh -eu
+#
+# Debianize given packages and update them to PPA
+
+build () {
+    echo Build number $1 for $2
+    # How ugly can it get?
+    sed -i "s/^\(haskell-stratum-tool ([.0-9]*\)[-a-z0-9]*) [a-z0-9]*/\1-$2$1) $2/" debian/changelog
+    dpkg-buildpackage -S
+}
+
+if test $# -ne 1; then
+    echo Build number must be given for this version >&2
+    exit 1
+fi
+
+if ! test -e debianize; then
+    echo Must be run in the same directory as the package >&2
+    exit 1
+fi
+
+rm -rf debian/
+cabal-debian '--maintainer=Joel Lehtonen <joel.lehtonen@koodilehto.fi>' --default-package stratum-tool
+touch debian/startflag
+
+for DISTRO in precise trusty utopic; do build $1 $DISTRO; done
+
+# Find files .changes files created after startflag file and upload them
+find .. -maxdepth 1 -name '*.changes' -and -cnewer debian/startflag -print0 | xargs -0 dput ppa:zouppen/stratum-tool 
