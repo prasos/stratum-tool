@@ -10,7 +10,7 @@ import Data.ByteString.Builder
 import Data.Monoid
 import Data.String (fromString)
 import System.Console.CmdArgs.Implicit
-import System.IO (stdout)
+import System.IO
 
 import StratumClient
 import PrettyJson
@@ -48,6 +48,7 @@ synopsis =
 main = do
   args@Args{..} <- cmdArgs synopsis
   stratumConn <- connectStratum server $ fromIntegral port
+  hSetBuffering stdout LineBuffering
   (if follow then trackAddresses else oneTime) stratumConn args
 
 -- |Track changes in given addresses and run the command when changes
