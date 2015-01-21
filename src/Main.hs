@@ -4,9 +4,9 @@ module Main where
 import Control.Applicative
 import Control.Concurrent.Async (mapConcurrently)
 import Control.Concurrent.STM (atomically, readTChan)
-import Control.Monad (forever)
 import Data.Aeson
 import Data.ByteString.Builder
+import qualified Data.Map as M
 import Data.Monoid
 import Data.String (fromString)
 import System.Console.CmdArgs.Implicit
@@ -14,6 +14,10 @@ import System.IO
 
 import StratumClient
 import PrettyJson
+
+data AddrState = AddrState { hash  :: String
+                           , value :: Value
+                           } deriving (Show)
 
 data Args = Args { server   :: String
                  , port     :: Int
@@ -57,16 +61,23 @@ trackAddresses :: StratumConn -> Args -> IO ()
 trackAddresses stratumConn Args{..} = do
   chan <- stratumChan stratumConn "blockchain.address.subscribe"
   -- Subscribe, but throw away results (only some hashes there)
-  mapConcurrently
-    (queryStratumValue stratumConn "blockchain.address.subscribe" . pure)
-    params
+  hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) params
+  values <- mapConcurrently (qv command . pure) params
+  let m = M.fromList $ zipWith3 mapify params hashes values
   -- Print current state at first
   oneTime stratumConn Args{multi=True,..}
   -- Listen for changes
-  forever $ do
-    [addr,_] <- takeJSON <$> atomically (readTChan chan)
-    ans <- queryStratumValue stratumConn command [addr]
-    printValue json $ object [fromString addr .= ans]
+  let loop m = do
+        [addr,newHash] <- takeJSON <$> atomically (readTChan chan)
+        let AddrState{..} = m M.! addr
+        if hash /= newHash
+          then do newValue <- qv command [addr]
+                  printValue json $ object [fromString addr .= newValue]
+                  loop $ M.insert addr (AddrState newHash newValue) m
+          else loop m
+    in loop m
+  where qv = queryStratumValue stratumConn
+        mapify a h v = (a, AddrState (takeJSON h) v)
 
 -- |Process single request. 
 oneTime :: StratumConn -> Args -> IO ()
