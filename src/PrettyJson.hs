@@ -18,6 +18,7 @@ breadcrumbs' :: Bool -> Builder -> Builder -> Value -> Builder
 breadcrumbs' start path b v = case v of
   Object o -> M.foldlWithKey (objBuilder start path) b $ takeJSON $ Object o
   Array a -> V.ifoldl (arrayBuilder path) b a
+  Null -> b
   _ -> b <>
        path <>
        (if start then mempty else byteString " = ") <>
