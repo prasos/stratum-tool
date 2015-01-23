@@ -22,6 +22,16 @@ To install:
 
 For Debian 7 (wheezy) there are experimental builds available [at my site](http://zouppen.iki.fi/packages/stratum-tool).
 
+## Installation on Arch
+
+StratumTool is available on the [AUR](https://aur.archlinux.org/packages/stratum-tool/).
+
+To install:
+
+```sh
+pacaur -S stratum-tool
+```
+
 ## Useful commands
 
 Here is listing of useful commands. Of course you may use any other
