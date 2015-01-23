@@ -16,14 +16,19 @@ breadcrumbs = breadcrumbs' True mempty mempty
 
 breadcrumbs' :: Bool -> Builder -> Builder -> Value -> Builder
 breadcrumbs' start path b v = case v of
-  Object o -> M.foldlWithKey (objBuilder start path) b $ takeJSON $ Object o
-  Array a -> V.ifoldl (arrayBuilder path) b a
-  Null -> b
-  _ -> b <>
-       path <>
-       (if start then mempty else byteString " = ") <>
-       lazyByteString (encode v) <>
-       byteString "\n"
+  Object o -> let m = takeJSON (Object o)
+              in if M.null m
+                 then item $ byteString "{}"
+                 else M.foldlWithKey (objBuilder start path) b m
+  Array a -> if V.null a
+             then item $ byteString "[]"
+             else V.ifoldl (arrayBuilder path) b a
+  _ -> item $ lazyByteString $ encode v
+  where item x = b <>
+                 path <>
+                 (if start then mempty else byteString " = ") <>
+                 lazyByteString (encode v) <>
+                 byteString "\n"
 
 objBuilder :: Bool -> Builder -> Builder -> Text -> Value -> Builder
 objBuilder start path b k v = breadcrumbs' False newPath b v
