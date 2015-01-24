@@ -15,10 +15,6 @@ import System.IO
 import StratumClient
 import PrettyJson
 
-data AddrState = AddrState { hash  :: String
-                           , value :: Value
-                           } deriving (Show)
-
 data Args = Args { server   :: String
                  , port     :: Int
                  , command  :: String
@@ -63,21 +59,20 @@ trackAddresses stratumConn Args{..} = do
   -- Subscribe, but throw away results (only some hashes there)
   hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) params
   values <- mapConcurrently (qv command . pure) params
-  let m = M.fromList $ zipWith3 mapify params hashes values
+  let m = M.fromList $ zipWith mapify params hashes
   -- Print current state at first
   oneTime stratumConn Args{multi=True,..}
   -- Listen for changes
   let loop m = do
         [addr,newHash] <- takeJSON <$> atomically (readTChan chan)
-        let AddrState{..} = m M.! addr
-        if hash /= newHash
+        if m M.! addr /= newHash
           then do newValue <- qv command [addr]
                   printValue json $ object [fromString addr .= newValue]
-                  loop $ M.insert addr (AddrState newHash newValue) m
+                  loop $ M.insert addr newHash m
           else loop m
     in loop m
   where qv = queryStratumValue stratumConn
-        mapify a h v = (a, AddrState (takeJSON h) v)
+        mapify a h = (a, takeJSON h)
 
 -- |Process single request. 
 oneTime :: StratumConn -> Args -> IO ()
