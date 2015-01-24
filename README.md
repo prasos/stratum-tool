@@ -90,6 +90,13 @@ When using `--json` option the output format is JSON:
 	$ stratum-tool -j -m blockchain.address.get_balance 1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5 1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z
 	{"1duckuPMxPbfDvx2HBBtGHataWtqb9X1Z":{"unconfirmed":0,"confirmed":2317254},"1FvEggFtNSYS9pcBoYB9wDxH9fa1mrNPW5":{"unconfirmed":0,"confirmed":71286480}}
 
+## Currency conversion
+
+Since version 0.0.3 it is possible to use BitPay exchange rates for
+converting bitcoin amounts to your currency. See
+[list of supported currencies](https://bitpay.com/bitcoin-exchange-rates). Example
+usage: `--currency EUR`.
+
 ## Compiling
 
 StratumTool is written in [Haskell](http://en.wikipedia.org/wiki/Haskell_%28programming_language%29) and can be built using Cabal:

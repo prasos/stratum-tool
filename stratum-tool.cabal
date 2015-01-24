@@ -1,5 +1,5 @@
 name:          stratum-tool
-version:       0.0.2
+version:       0.0.3
 synopsis:      Client for Stratum protocol
 description:   Connects to Electrum server via Stratum protocol and
 	       allows querying bitcoin wallet balances and other commands

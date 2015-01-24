@@ -51,7 +51,7 @@ synopsis =
                          \All currency codes supported by BitPay are available."
        }
   &= program "stratum-tool"
-  &= summary "StratumTool v0.0.2"
+  &= summary "StratumTool v0.0.3"
   &= help "Connect to Electrum server via Stratum protocol and \
           \allows querying wallet balances etc."
 
