@@ -56,9 +56,8 @@ main = do
 trackAddresses :: StratumConn -> Args -> IO ()
 trackAddresses stratumConn Args{..} = do
   chan <- stratumChan stratumConn "blockchain.address.subscribe"
-  -- Subscribe, but throw away results (only some hashes there)
+  -- Subscribe and collect the hashes for future comparison
   hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) params
-  values <- mapConcurrently (qv command . pure) params
   let m = M.fromList $ zipWith mapify params hashes
   -- Print current state at first
   oneTime stratumConn Args{multi=True,..}
