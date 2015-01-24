@@ -33,5 +33,7 @@ executable stratum-tool
     time >= 1.4.0.1,
     -- This will ensure Builder support in old environments
     bytestring-builder >= 0.10.4.0.1,
-    -- Any version of vector do because aeson will restrict it anyway
-    vector
+    -- Any version of these will do do because aeson will restrict it anyway
+    vector,
+    unordered-containers,
+    scientific
