@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards #-}
-module BitPay (bitpay, simpleRate, Scientific) where
+module BitPay (bitpay, simpleRate) where
 
 import Control.Applicative
 import Control.Concurrent (forkIO,threadDelay)
@@ -10,18 +10,19 @@ import Data.Aeson.Types
 import Data.Map as M (Map,fromList,lookup)
 import Data.Text (Text, toLower)
 import Network.Curl.Aeson
-import Data.Scientific (Scientific)
 
 import Retry
 
-type RateMap = Map Text Scientific
+-- To maintain compatibility with aeson < 0.7, we use Value instead of
+-- Scientific.
+type RateMap = Map Text Value
 
 ratesToMap :: Value -> Parser RateMap
 ratesToMap v = do
   pairs <- parseJSON v >>= mapM rateToPair
   return $ fromList pairs
 
-rateToPair :: Value -> Parser (Text,Scientific)
+rateToPair :: Value -> Parser (Text, Value)
 rateToPair = withObject "Not an object" $ \v -> do
   k <- v .: "code"
   v <- v .: "rate"
@@ -43,9 +44,10 @@ bitpay = do
   forkIO $ bitpayLoop var
   return var
 
-simpleRate :: TVar RateMap -> Text -> IO (Text, Scientific)
+-- |Look for exchange rate for the given currency.
+simpleRate :: TVar RateMap -> Text -> IO (Text, Value)
 simpleRate var code = do
   m <- readTVarIO var
   case M.lookup code m of
     Nothing -> fail "Unknown currency code"
-    Just x  -> return (code,x)
+    Just  x -> return (code,x)
