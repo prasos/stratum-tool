@@ -30,7 +30,7 @@ executable stratum-tool
     network >= 2.3,
     stm >= 2.4,
     text >= 0.11,
-    time >= 1.4.0.1,
+    time >= 1.4,
     -- This will ensure Builder support in old environments
     bytestring-builder >= 0.10.4.0.1,
     -- Any version of these will do do because aeson will restrict it anyway
