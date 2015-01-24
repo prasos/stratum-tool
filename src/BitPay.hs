@@ -23,10 +23,11 @@ ratesToMap v = do
   return $ fromList pairs
 
 rateToPair :: Value -> Parser (Text, Value)
-rateToPair = withObject "Not an object" $ \v -> do
+rateToPair (Object v) = do
   k <- v .: "code"
   v <- v .: "rate"
   return (toLower k,v)
+rateToPair _ = fail "Not an object"
 
 getRates :: IO RateMap
 getRates = curlAesonGetWith ratesToMap "https://bitpay.com/api/rates"
