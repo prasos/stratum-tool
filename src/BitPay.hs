@@ -7,8 +7,8 @@ import Control.Concurrent.STM
 import Control.Monad (forever,mzero)
 import Data.Aeson
 import Data.Aeson.Types
-import Data.Map as M (Map,fromList,lookup)
-import Data.Text (Text, toLower)
+import Data.Map as M (Map, fromList, lookup, keys)
+import Data.Text as T (Text, toUpper, toLower, intercalate, unpack)
 import Network.Curl.Aeson
 
 import Retry
@@ -49,5 +49,6 @@ simpleRate :: TVar RateMap -> Text -> IO (Text, Value)
 simpleRate var code = do
   m <- readTVarIO var
   case M.lookup code m of
-    Nothing -> fail "Unknown currency code"
+    Nothing -> fail $ "Unknown currency code. Supported codes: " ++
+               (T.unpack $ T.intercalate ", " $ map T.toUpper $ M.keys m)
     Just  x -> return (code,x)
