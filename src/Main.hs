@@ -58,7 +58,6 @@ trackAddresses stratumConn Args{..} = do
   chan <- stratumChan stratumConn "blockchain.address.subscribe"
   -- Subscribe and collect the hashes for future comparison
   hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) params
-  let m = M.fromList $ zipWith mapify params hashes
   -- Print current state at first
   oneTime stratumConn Args{multi=True,..}
   -- Listen for changes
@@ -69,7 +68,7 @@ trackAddresses stratumConn Args{..} = do
                   printValue json $ object [fromString addr .= newValue]
                   loop $ M.insert addr newHash m
           else loop m
-    in loop m
+    in loop $ M.fromList $ zipWith mapify params hashes
   where qv = queryStratumValue stratumConn
         mapify a h = (a, takeJSON h)
 
