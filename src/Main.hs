@@ -116,12 +116,12 @@ objectZip ss vs = object $ zipWith toPair ss vs
 -- |Inject currency data recursively to given Value.
 currencyInjector :: (Text, Value) -> Value -> Value
 currencyInjector rate v = case v of
-  Object o -> Object $ H.mapWithKey conv o
+  Object o -> Object $ H.fromList $ map conv $ H.toList o
   Array a -> Array $ V.map (currencyInjector rate) a
   _ -> v
   where
-    conv k (Number n) | k `elem` currencyFields = inject rate (Number n)
-    conv k v = (currencyInjector rate) v
+    conv (k, (Number n)) | k `elem` currencyFields = (k, inject rate (Number n))
+    conv (k, v) = (k, (currencyInjector rate) v)
 
 -- |List of Stratum object key names which contain bitcoin amounts.
 currencyFields :: [Text]
