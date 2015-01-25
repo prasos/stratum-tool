@@ -45,7 +45,7 @@ connectStratum host port insecure = do
   ctx <- initConnectionContext
   conn <- connectTo ctx $ ConnectionParams host port
           (if insecure then Nothing
-           else Just $ TLSSettingsSimple False False False)
+           else Just $ TLSSettingsSimple True False False)
           Nothing
   sender <- newTChanIO
   listeners <- newTVarIO $ I.empty
