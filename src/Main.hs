@@ -29,13 +29,14 @@ data Args = Args { server   :: String
                  , json     :: Bool
                  , follow   :: Bool
                  , currency :: String
+                 , unsecure :: Bool
                  } deriving (Show, Data, Typeable)
 
 synopsis =
   Args { server = "electrum.bittiraha.fi" &=
                   help "Electrum server address (electrum.bittiraha.fi)" &=
                   typ "HOST"
-       , port = 50001 &= help "Electrum port (50001)"
+       , port = def &= help "Electrum port (50002 secure, 50001 unsecure)"
        , command = def &= argPos 0 &= typ "COMMAND"
        , params = def &= args &= typ "PARAMS"
        , multi = def &=
@@ -49,6 +50,7 @@ synopsis =
        , currency = def &= typ "CODE" &=
                     help "Convert bitcoins to given currency using BitPay. \
                          \All currency codes supported by BitPay are available."
+       , unsecure = def
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.3"
@@ -57,7 +59,11 @@ synopsis =
 
 main = do
   args@Args{..} <- cmdArgs synopsis
-  stratumConn <- connectStratum server $ fromIntegral port
+  let realPort = case (port, unsecure) of
+        (0, False) -> 50002
+        (0, True)  -> 50001
+        (x,_)      -> fromIntegral x
+  stratumConn <- connectStratum server realPort unsecure
   hSetBuffering stdout LineBuffering
   getInjector <- if null currency
                  then return $ return id
