@@ -12,7 +12,6 @@ import Control.Concurrent.STM
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
-import Data.Default
 import Network (HostName, PortNumber)
 import Network.Connection
 import System.IO
@@ -42,10 +41,12 @@ instance FromJSON Response where
 jsonMax = 10^8 -- 100 megabytes of JSON is too much for us
 
 connectStratum :: HostName -> PortNumber -> Bool -> IO StratumConn
-connectStratum host port unsecure = do
+connectStratum host port insecure = do
   ctx <- initConnectionContext
   conn <- connectTo ctx $ ConnectionParams host port
-          (if unsecure then Nothing else Just def) Nothing
+          (if insecure then Nothing
+           else Just $ TLSSettingsSimple False False False)
+          Nothing
   sender <- newTChanIO
   listeners <- newTVarIO $ I.empty
   channels <- newTVarIO $ M.empty
