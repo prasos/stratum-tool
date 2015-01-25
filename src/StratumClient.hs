@@ -23,6 +23,8 @@ import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy.Char8 as BL
 
+import Common
+
 type StratumQuery = Value -> IO ()
 
 data StratumConn = StratumConn { sender    :: TChan ByteString
@@ -40,12 +42,15 @@ instance FromJSON Response where
 
 jsonMax = 10^8 -- 100 megabytes of JSON is too much for us
 
-connectStratum :: HostName -> PortNumber -> Bool -> IO StratumConn
-connectStratum host port insecure = do
+connectStratum :: HostName -> PortNumber -> Security -> IO StratumConn
+connectStratum host port security = do
   ctx <- initConnectionContext
   conn <- connectTo ctx $ ConnectionParams host port
-          (if insecure then Nothing
-           else Just $ TLSSettingsSimple True False False)
+          (case security of
+              Tcp       -> Nothing
+              UnsafeSsl -> Just $ TLSSettingsSimple True False False
+              Ssl       -> Just $ TLSSettingsSimple False False False
+          )
           Nothing
   sender <- newTChanIO
   listeners <- newTVarIO $ I.empty

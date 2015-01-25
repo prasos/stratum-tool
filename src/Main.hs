@@ -16,6 +16,7 @@ import System.Console.CmdArgs.Implicit
 import System.IO
 
 import BitPay
+import Common
 import StratumClient
 import PrettyJson
 
@@ -29,13 +30,13 @@ data Args = Args { server   :: String
                  , json     :: Bool
                  , follow   :: Bool
                  , currency :: String
-                 , insecure :: Bool
+                 , security :: Security
                  } deriving (Show, Data, Typeable)
 
 synopsis =
   Args { server = "electrum.bittiraha.fi" &=
                   help "Electrum server address (electrum.bittiraha.fi)" &=
-                  typ "HOST"
+                  typ "HOST" &= name "s"
        , port = def &= help "Electrum port (50002 for SSL, 50001 for TCP)"
        , command = def &= argPos 0 &= typ "COMMAND"
        , params = def &= args &= typ "PARAMS"
@@ -50,7 +51,11 @@ synopsis =
        , currency = def &= typ "CODE" &=
                     help "Convert bitcoins to given currency using BitPay. \
                          \All currency codes supported by BitPay are available."
-       , insecure = def &= help "Use plain TCP connection instead of SSL."
+       , security = UnsafeSsl &= name "S" &= typ "MODE" &=
+                    help "Connection method to Electrum server. Possible \
+                         \values: 'tcp' for unencrypted connection, \
+                         \'unsafessl' for SSL without certificate check \
+                         \(default), and 'ssl' for SSL with certificate check."
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.3"
@@ -59,11 +64,12 @@ synopsis =
 
 main = do
   args@Args{..} <- cmdArgs synopsis
-  let realPort = case (port, insecure) of
-        (0, False) -> 50002
-        (0, True)  -> 50001
-        (x,_)      -> fromIntegral x
-  stratumConn <- connectStratum server realPort insecure
+  let realPort = case (port, security) of
+        (0, UnsafeSsl) -> 50002
+        (0, Ssl)       -> 50002
+        (0, Tcp)       -> 50001
+        (x, _)         -> fromIntegral x
+  stratumConn <- connectStratum server realPort security
   hSetBuffering stdout LineBuffering
   getInjector <- if null currency
                  then return $ return id
