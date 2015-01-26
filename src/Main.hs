@@ -19,7 +19,7 @@ import BitPay
 import StratumClient
 import PrettyJson
 
-type InjectorSource = IO (Value -> Value)
+type Printer = Value -> IO ()
 
 data Args = Args { server   :: String
                  , port     :: Int
@@ -61,31 +61,33 @@ main = do
   hSetBuffering stdout LineBuffering
   bitpay <- initBitpay
   let currencyText = T.toLower $ T.pack currency
-      getInjector =
+      printer ans =
         if null currency
-        then return id
+        -- When no currency conversion, just print the values
+        then printValue json ans
+        -- When currency conversion is needed, first print normally,
+        -- then update rates and print converted values.
         else do
+          printValue json ans
           rates <- bitpay
-          return $ currencyInjector $ simpleRate rates currencyText
-  (if follow then trackAddresses else oneTime) getInjector stratumConn args
+          printValue json $ currencyInjector (simpleRate rates currencyText) ans
+  (if follow then trackAddresses else oneTime) printer stratumConn args
 
 -- |Track changes in given addresses and run the command when changes
 -- occur.
-trackAddresses :: InjectorSource -> StratumConn -> Args -> IO ()
-trackAddresses getInjector stratumConn Args{..} = do
+trackAddresses :: Printer -> StratumConn -> Args -> IO ()
+trackAddresses printer stratumConn Args{..} = do
   chan <- stratumChan stratumConn "blockchain.address.subscribe"
   -- Subscribe and collect the hashes for future comparison
   hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) params
   -- Print current state at first
-  oneTime getInjector stratumConn Args{multi=True,..}
+  oneTime printer stratumConn Args{multi=True,..}
   -- Listen for changes
   let loop m = do
         [addr,newHash] <- takeJSON <$> atomically (readTChan chan)
         if m M.! addr /= newHash
           then do newValue <- qv command [addr]
-                  injector <- getInjector
-                  printValue json $ injector $
-                    object [fromString addr .= newValue]
+                  printer $ object [fromString addr .= newValue]
                   loop $ M.insert addr newHash m
           else loop m
     in loop $ M.fromList $ zipWith mapify params hashes
@@ -93,18 +95,17 @@ trackAddresses getInjector stratumConn Args{..} = do
         mapify a h = (a, takeJSON h)
 
 -- |Process single request. 
-oneTime :: InjectorSource -> StratumConn -> Args -> IO ()
-oneTime getInjector stratumConn Args{..} = do
+oneTime :: Printer -> StratumConn -> Args -> IO ()
+oneTime printer stratumConn Args{..} = do
   ans <- if multi
          then objectZip params <$>
               mapConcurrently (queryStratumValue stratumConn command . pure) params
          else queryStratumValue stratumConn command params
-  injector <- getInjector
-  printValue json $ injector ans
+  printer ans
 
 -- |Prints given JSON value to stdout. When `json` is True, then just
 -- print as encoded to JSON, otherwise breadcrumbs format is used.
-printValue :: Bool -> Value -> IO ()
+printValue :: Bool -> Printer
 printValue json ans =
   hPutBuilder stdout $ if json
                        then lazyByteString (encode ans) <> byteString "\n"
@@ -116,15 +117,22 @@ objectZip :: [String] -> [Value] -> Value
 objectZip ss vs = object $ zipWith toPair ss vs
   where toPair s v = (fromString s, v)
 
--- |Inject currency data recursively to given Value.
+-- |Inject currency data recursively to given Value. Vacuum all other
+-- data from the JSON value.
 currencyInjector :: (Text, Value) -> Value -> Value
 currencyInjector rate v = case v of
-  Object o -> Object $ H.fromList $ map conv $ H.toList o
+  Object o -> Object $ H.map conv $ H.filterWithKey isAmount o
   Array a -> Array $ V.map (currencyInjector rate) a
   _ -> v
   where
-    conv (k, (Number n)) | k `elem` currencyFields = (k, inject rate (Number n))
-    conv (k, v) = (k, (currencyInjector rate) v)
+    -- isAmount keeps Numbers which are currencies, Objects, and Arrays
+    isAmount k (Number _) = k `elem` currencyFields
+    isAmount _ (Object _) = True
+    isAmount _ (Array _) = True
+    isAmount _ _ = False
+    -- conv converts all Numbers and recurses into others
+    conv (Number n) = inject rate (Number n)
+    conv v = currencyInjector rate v
 
 -- |List of Stratum object key names which contain bitcoin amounts.
 currencyFields :: [Text]
@@ -137,6 +145,4 @@ currencyFields = ["confirmed"
 -- satoshis and given currency.
 inject :: (Text, Value) -> Value -> Value
 inject (code, Number rate) (Number n) =
-  object [("satoshi", Number n)
-         ,(code, Number (n*rate*1e-8))
-         ]
+  object [(code, Number (n*rate*1e-8))]
