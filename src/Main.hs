@@ -17,6 +17,7 @@ import System.Console.CmdArgs.Implicit
 import System.IO
 
 import BitPay
+import Common
 import StratumClient
 import PrettyJson
 
@@ -30,13 +31,14 @@ data Args = Args { server   :: String
                  , json     :: Bool
                  , follow   :: Bool
                  , currency :: String
+                 , security :: Security
                  } deriving (Show, Data, Typeable)
 
 synopsis =
   Args { server = "electrum.bittiraha.fi" &=
                   help "Electrum server address (electrum.bittiraha.fi)" &=
-                  typ "HOST"
-       , port = 50001 &= help "Electrum port (50001)"
+                  typ "HOST" &= name "s"
+       , port = def &= help "Electrum port (50002 for SSL, 50001 for TCP)"
        , command = def &= argPos 0 &= typ "COMMAND"
        , params = def &= args &= typ "PARAMS"
        , multi = def &=
@@ -50,6 +52,11 @@ synopsis =
        , currency = def &= typ "CODE" &=
                     help "Convert bitcoins to given currency using BitPay. \
                          \All currency codes supported by BitPay are available."
+       , security = Ssl &= name "S" &= typ "MODE" &=
+                    help "Connection method to Electrum server. Possible \
+                         \values: 'tcp' for unencrypted connection, \
+                         \'ssl' for SSL without certificate check (default), \
+                         \and 'safessl' for SSL with certificate check."
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.3"
@@ -58,7 +65,12 @@ synopsis =
 
 main = do
   args@Args{..} <- cmdArgs synopsis
-  stratumConn <- connectStratum server $ fromIntegral port
+  let realPort = case (port, security) of
+        (0, SafeSsl)   -> 50002
+        (0, Ssl)       -> 50002
+        (0, Tcp)       -> 50001
+        (x, _)         -> fromIntegral x
+  stratumConn <- connectStratum server realPort security
   hSetBuffering stdout LineBuffering
   bitpay <- initBitpay
   let currencyText = T.toLower $ T.pack currency
