@@ -1,17 +1,18 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards #-}
-module BitPay (bitpay, simpleRate) where
+module BitPay (initBitpay, simpleRate) where
 
 import Control.Applicative
 import Control.Concurrent (forkIO,threadDelay)
 import Control.Concurrent.STM
+import Control.Exception
 import Control.Monad (forever,mzero)
 import Data.Aeson
 import Data.Aeson.Types
-import Data.Map as M (Map, fromList, lookup, keys)
+import Data.Map as M hiding (map)
 import Data.Text as T (Text, toUpper, toLower, intercalate, unpack)
+import Data.Time.Clock.POSIX
 import Network.Curl.Aeson
-
-import Retry
+import Network.Curl.Opts
 
 -- To maintain compatibility with aeson < 0.7, we use Value instead of
 -- Scientific.
@@ -30,26 +31,42 @@ rateToPair (Object v) = do
 rateToPair _ = fail "Not an object"
 
 getRates :: IO RateMap
-getRates = curlAesonGetWith ratesToMap "https://bitpay.com/api/rates"
+getRates = curlAeson ratesToMap "GET" "https://bitpay.com/api/rates"
+           [CurlTimeout 30] noData
 
-bitpayLoop :: TVar RateMap -> IO ()
-bitpayLoop var = forever $ do
-  threadDelay 60000000
-  xs <- foreverRetryPrintEx getRates
-  atomically $ writeTVar var xs
-
-bitpay :: IO (TVar RateMap)
-bitpay = do
-  initial <- getRates
-  var <- newTVarIO initial
-  forkIO $ bitpayLoop var
-  return var
+-- |Return an action which returns the rates when the action is
+-- run. This doesn't perform HTTP query so it's OK to run this even if
+-- no currency conversion is needed. The returned action caches rates
+-- for 60 seconds and fails if BitPay has been unreachable for 10
+-- minutes.
+initBitpay :: IO (IO RateMap)
+initBitpay = do
+  lastUpdateVar <- newTVarIO 0
+  ratesVar <- newTVarIO M.empty
+  return $ do
+    lastUpdate <- readTVarIO lastUpdateVar
+    now <- getPOSIXTime
+    -- Use cache if rates are less than 1 minute old
+    if now < lastUpdate + 60
+      then readTVarIO ratesVar
+      else do rateTry <- try getRates
+              case rateTry of
+                Right newRates -> atomically $ do
+                  writeTVar lastUpdateVar now
+                  writeTVar ratesVar newRates
+                  return newRates
+                Left e -> do
+                  putStrLn $ "BitPay unreachable: " ++ show (e :: CurlAesonException)
+                  -- If cache is older than 10 minutes,
+                  -- fail. Otherwise returning old data.
+                  if now < lastUpdate + 600
+                    then readTVarIO ratesVar
+                    else fail "No fresh cached data available, quitting"
 
 -- |Look for exchange rate for the given currency.
-simpleRate :: TVar RateMap -> Text -> IO (Text, Value)
-simpleRate var code = do
-  m <- readTVarIO var
+simpleRate :: RateMap -> Text -> (Text, Value)
+simpleRate m code =
   case M.lookup code m of
-    Nothing -> fail $ "Unknown currency code. Supported codes: " ++
+    Nothing -> error $ "Unknown currency code. Supported codes: " ++
                (T.unpack $ T.intercalate ", " $ map T.toUpper $ M.keys m)
-    Just  x -> return (code,x)
+    Just x -> (code, x)

@@ -59,12 +59,14 @@ main = do
   args@Args{..} <- cmdArgs synopsis
   stratumConn <- connectStratum server $ fromIntegral port
   hSetBuffering stdout LineBuffering
-  getInjector <- if null currency
-                 then return $ return id
-                 else do
-                     rateVar <- bitpay
-                     return $ currencyInjector <$>
-                       (simpleRate rateVar $ T.toLower $ T.pack currency)
+  bitpay <- initBitpay
+  let currencyText = T.toLower $ T.pack currency
+      getInjector =
+        if null currency
+        then return id
+        else do
+          rates <- bitpay
+          return $ currencyInjector $ simpleRate rates currencyText
   (if follow then trackAddresses else oneTime) getInjector stratumConn args
 
 -- |Track changes in given addresses and run the command when changes
