@@ -17,9 +17,10 @@ breadcrumbs = breadcrumbs' True mempty mempty
 breadcrumbs' :: Bool -> Builder -> Builder -> Value -> Builder
 breadcrumbs' start path b v = case v of
   Object o -> let m = takeJSON (Object o)
+                  objPath = path <> if start then mempty else char7 '.'
               in if M.null m
                  then item $ byteString "{}"
-                 else M.foldlWithKey (objBuilder start path) b m
+                 else M.foldlWithKey (objBuilder objPath) b m
   Array a -> if V.null a
              then item $ byteString "[]"
              else V.ifoldl (arrayBuilder path) b a
@@ -30,10 +31,9 @@ breadcrumbs' start path b v = case v of
                  lazyByteString (encode v) <>
                  byteString "\n"
 
-objBuilder :: Bool -> Builder -> Builder -> Text -> Value -> Builder
-objBuilder start path b k v = breadcrumbs' False newPath b v
+objBuilder :: Builder -> Builder -> Text -> Value -> Builder
+objBuilder path b k v = breadcrumbs' False newPath b v
   where newPath = path <>
-                  (if start then mempty else byteString ".") <>
                   buildText k
 
 arrayBuilder :: Builder -> Builder -> Int -> Value -> Builder
