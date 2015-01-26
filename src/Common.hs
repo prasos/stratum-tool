@@ -4,6 +4,6 @@ module Common where
 import System.Console.CmdArgs.Implicit (Data, Typeable)
 
 data Security = Tcp
-              | UnsafeSsl
+              | SafeSsl
               | Ssl
               deriving (Show, Data, Typeable)

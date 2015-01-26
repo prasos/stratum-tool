@@ -47,9 +47,9 @@ connectStratum host port security = do
   ctx <- initConnectionContext
   conn <- connectTo ctx $ ConnectionParams host port
           (case security of
-              Tcp       -> Nothing
-              UnsafeSsl -> Just $ TLSSettingsSimple True False False
-              Ssl       -> Just $ TLSSettingsSimple False False False
+              Tcp     -> Nothing
+              Ssl     -> Just $ TLSSettingsSimple True False False
+              SafeSsl -> Just $ TLSSettingsSimple False False False
           )
           Nothing
   sender <- newTChanIO

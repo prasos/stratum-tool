@@ -51,11 +51,11 @@ synopsis =
        , currency = def &= typ "CODE" &=
                     help "Convert bitcoins to given currency using BitPay. \
                          \All currency codes supported by BitPay are available."
-       , security = UnsafeSsl &= name "S" &= typ "MODE" &=
+       , security = Ssl &= name "S" &= typ "MODE" &=
                     help "Connection method to Electrum server. Possible \
                          \values: 'tcp' for unencrypted connection, \
-                         \'unsafessl' for SSL without certificate check \
-                         \(default), and 'ssl' for SSL with certificate check."
+                         \'ssl' for SSL without certificate check (default), \
+                         \and 'safessl' for SSL with certificate check."
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.3"
@@ -65,7 +65,7 @@ synopsis =
 main = do
   args@Args{..} <- cmdArgs synopsis
   let realPort = case (port, security) of
-        (0, UnsafeSsl) -> 50002
+        (0, SafeSsl)   -> 50002
         (0, Ssl)       -> 50002
         (0, Tcp)       -> 50001
         (x, _)         -> fromIntegral x
