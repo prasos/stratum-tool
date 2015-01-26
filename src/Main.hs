@@ -62,19 +62,15 @@ main = do
   hSetBuffering stdout LineBuffering
   bitpay <- initBitpay
   let currencyText = T.toLower $ T.pack currency
-      printer ans =
-        if null currency
-        -- When no currency conversion, just print the values
-        then printValue json ans
-        -- When currency conversion is needed, first print normally,
-        -- then update rates and print converted values if they
-        -- contain amounts.
-        else do
-          printValue json ans
-          when (usefulValue $ currencyInjector ans Nothing) $ do            
-            rates <- bitpay
-            let rated = currencyInjector ans $ Just $ simpleRate rates currencyText
-            printValue json rated
+      printer ans = do
+        -- First print the value as usual
+        printValue json ans
+        -- When currency conversion is needed, then update rates and
+        -- print converted values if they contain any amounts.
+        when (currency /= "" && usefulValue (currencyInjector ans Nothing)) $ do
+          rates <- bitpay
+          printValue json $
+            currencyInjector ans $ Just $ simpleRate rates currencyText
   (if follow then trackAddresses else oneTime) printer stratumConn args
 
 -- |Track changes in given addresses and run the command when changes
