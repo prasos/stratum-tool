@@ -122,11 +122,11 @@ objectZip ss vs = object $ zipWith toPair ss vs
 -- |Inject currency data recursively to given Value. Vacuum all other
 -- data from the JSON value.
 currencyInjector :: (Text, Value) -> Value -> Value
-currencyInjector rate v = case v of
-  Object o -> Object $ H.filter usefulValue $ H.map conv $ H.filterWithKey isAmount o
-  Array a -> Array $ V.filter usefulValue $ V.map (currencyInjector rate) a
-  _ -> v
+currencyInjector rate = recurse
   where
+    recurse (Object o) = Object $ H.filter usefulValue $ H.map conv $ H.filterWithKey isAmount o
+    recurse (Array a) = Array $ V.filter usefulValue $ V.map recurse a
+    recurse v = v
     -- isAmount keeps Numbers which are currencies, Objects, and Arrays
     isAmount k (Number _) = k `elem` currencyFields
     isAmount _ (Object _) = True
@@ -134,7 +134,7 @@ currencyInjector rate v = case v of
     isAmount _ _ = False
     -- conv converts all Numbers and recurses into others
     conv (Number n) = inject rate (Number n)
-    conv v = currencyInjector rate v
+    conv v = recurse v
 
 -- |List of Stratum object key names which contain bitcoin amounts.
 currencyFields :: [Text]
