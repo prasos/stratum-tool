@@ -4,6 +4,7 @@ module Main where
 import Control.Applicative
 import Control.Concurrent.Async (mapConcurrently)
 import Control.Concurrent.STM (atomically, readTChan)
+import Control.Monad (when)
 import Data.Aeson
 import Data.ByteString.Builder
 import qualified Data.HashMap.Strict as H
@@ -70,7 +71,8 @@ main = do
         else do
           printValue json ans
           rates <- bitpay
-          printValue json $ currencyInjector (simpleRate rates currencyText) ans
+          let rated = currencyInjector (simpleRate rates currencyText) ans
+          when (usefulValue rated) (printValue json rated)
   (if follow then trackAddresses else oneTime) printer stratumConn args
 
 -- |Track changes in given addresses and run the command when changes
@@ -121,8 +123,8 @@ objectZip ss vs = object $ zipWith toPair ss vs
 -- data from the JSON value.
 currencyInjector :: (Text, Value) -> Value -> Value
 currencyInjector rate v = case v of
-  Object o -> Object $ H.map conv $ H.filterWithKey isAmount o
-  Array a -> Array $ V.map (currencyInjector rate) a
+  Object o -> Object $ H.filter usefulValue $ H.map conv $ H.filterWithKey isAmount o
+  Array a -> Array $ V.filter usefulValue $ V.map (currencyInjector rate) a
   _ -> v
   where
     -- isAmount keeps Numbers which are currencies, Objects, and Arrays
@@ -146,3 +148,9 @@ currencyFields = ["confirmed"
 inject :: (Text, Value) -> Value -> Value
 inject (code, Number rate) (Number n) =
   object [(code, Number (n*rate*1e-8))]
+
+-- |Filter for removing empty objects and arrays.
+usefulValue :: Value -> Bool
+usefulValue (Object o) = not $ H.null o
+usefulValue (Array a) = not $ V.null a
+usefulValue _ = True
