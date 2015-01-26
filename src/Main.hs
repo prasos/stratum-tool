@@ -67,12 +67,14 @@ main = do
         -- When no currency conversion, just print the values
         then printValue json ans
         -- When currency conversion is needed, first print normally,
-        -- then update rates and print converted values.
+        -- then update rates and print converted values if they
+        -- contain amounts.
         else do
           printValue json ans
-          rates <- bitpay
-          let rated = currencyInjector (simpleRate rates currencyText) ans
-          when (usefulValue rated) (printValue json rated)
+          when (usefulValue $ currencyInjector ans Nothing) $ do            
+            rates <- bitpay
+            let rated = currencyInjector ans $ Just $ simpleRate rates currencyText
+            printValue json rated
   (if follow then trackAddresses else oneTime) printer stratumConn args
 
 -- |Track changes in given addresses and run the command when changes
@@ -121,8 +123,8 @@ objectZip ss vs = object $ zipWith toPair ss vs
 
 -- |Inject currency data recursively to given Value. Vacuum all other
 -- data from the JSON value.
-currencyInjector :: (Text, Value) -> Value -> Value
-currencyInjector rate = recurse
+currencyInjector :: Value -> Maybe (Text, Value) -> Value
+currencyInjector v rate = recurse v
   where
     recurse (Object o) = Object $ H.filter usefulValue $ H.map conv $ H.filterWithKey isAmount o
     recurse (Array a) = Array $ V.filter usefulValue $ V.map recurse a
@@ -133,7 +135,7 @@ currencyInjector rate = recurse
     isAmount _ (Array _) = True
     isAmount _ _ = False
     -- conv converts all Numbers and recurses into others
-    conv (Number n) = inject rate (Number n)
+    conv (Number n) = maybe Null (inject $ Number n) rate
     conv v = recurse v
 
 -- |List of Stratum object key names which contain bitcoin amounts.
@@ -145,8 +147,8 @@ currencyFields = ["confirmed"
 
 -- |Converts given numeric value to Object containing amount in
 -- satoshis and given currency.
-inject :: (Text, Value) -> Value -> Value
-inject (code, Number rate) (Number n) =
+inject :: Value -> (Text, Value) -> Value
+inject (Number n) (code, Number rate) =
   object [(code, Number (n*rate*1e-8))]
 
 -- |Filter for removing empty objects and arrays.
