@@ -6,4 +6,4 @@ import System.Console.CmdArgs.Implicit (Data, Typeable)
 data Security = Tcp
               | SafeSsl
               | Ssl
-              deriving (Show, Data, Typeable)
+              deriving (Show, Eq, Data, Typeable)

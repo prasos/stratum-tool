@@ -13,7 +13,6 @@ import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types
 import Network (HostName, PortNumber)
-import Network.Connection
 import System.IO
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as I
@@ -24,6 +23,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy.Char8 as BL
 
 import Common
+import Connection
 
 type StratumQuery = Value -> IO ()
 
@@ -40,25 +40,16 @@ instance FromJSON Response where
                          (Reply <$> o .: "id" <*> (Left <$> o .: "error")) <|>
                          (Push <$> o .: "method" <*> o .: "params")
 
-jsonMax = 10^8 -- 100 megabytes of JSON is too much for us
-
 connectStratum :: HostName -> PortNumber -> Security -> IO StratumConn
 connectStratum host port security = do
-  ctx <- initConnectionContext
-  conn <- connectTo ctx $ ConnectionParams host port
-          (case security of
-              Tcp     -> Nothing
-              Ssl     -> Just $ TLSSettingsSimple True False False
-              SafeSsl -> Just $ TLSSettingsSimple False False False
-          )
-          Nothing
+  conn <- connOpen host port security
   sender <- newTChanIO
   listeners <- newTVarIO $ I.empty
   channels <- newTVarIO $ M.empty
   nextSeq <- newTVarIO 0
   -- Thread for parsing output
   forkIO $ forever $ do
-    json <- connectionGetLine jsonMax conn
+    json <- connGetLine conn
     case decode (BL.fromChunks [json]) of
       Nothing -> hPutStr stderr $ "JSON parsing error"
       -- Send reply to the request sender
@@ -74,7 +65,7 @@ connectStratum host port security = do
   -- Thread for sending data
   forkIO $ forever $ do
     bs <- atomically $ readTChan sender
-    mapM_ (connectionPut conn) $ BL.toChunks $ bs `BL.snoc` '\n'
+    connPutLazy conn $ bs `BL.snoc` '\n'
   -- Thread for pinging
   forkIO $ forever $ do
     threadDelay 300000000
