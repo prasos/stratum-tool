@@ -112,12 +112,13 @@ usage: `--currency EUR`.
 
 ## Encryption
 
-Since version 0.0.4, SSL encryption is enabled by default without certificate
-checks. Electrum servers use self-signed certificates anyway so you
-should be a bit cautious if you connect over insecure network. You can
-force certificate check with `-S safessl` run time option. The
-encryption can be disabled at build time using `-ssl` flag which
-results much easier build-time dependencies.
+Since version 0.0.4, SSL encryption is enabled by default without
+certificate checks. Electrum servers
+[use self-signed certificates](https://github.com/spesmilo/electrum-server/blob/master/HOWTO.md#step-8-create-a-self-signed-ssl-cert)
+anyway so you should be a bit cautious if you connect over insecure
+network. You can force certificate check with `-S safessl` run time
+option. The encryption can be disabled at build time using `-ssl` flag
+which results much easier build-time dependencies.
 
 ## Compiling
 
