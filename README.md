@@ -10,19 +10,32 @@ unspent outputs, or any other command supported by Electrum protocol.
 The internal implementation is more complete than the command-line
 interface so it is easy to expand to more complex queries in future.
 
-## Installation in Ubuntu and Debian
+## Installation from a package
 
-There is PPA containing the most recent release for Ubuntu 12.04, 14.04, and 14.10. For other distributions, see section *Compiling* below.
+### Ubuntu
+
+There is
+[PPA](https://launchpad.net/~zouppen/+archive/ubuntu/stratum-tool/)
+containing the most recent release for Ubuntu 12.04, 14.04,
+and 14.10. Build for 12.04 lacks SSL support because of cumbersome
+dependencies of
+[connection](http://hackage.haskell.org/package/connection) library.
 
 To install:
 
-    sudo add-apt-repository ppa:zouppen/stratum-tool
-    sudo apt-get update
-    sudo apt-get install stratum-tool
+```sh
+sudo add-apt-repository ppa:zouppen/stratum-tool
+sudo apt-get update
+sudo apt-get install stratum-tool
+```
 
-For Debian 7 (wheezy) there are experimental builds available [at my site](http://zouppen.iki.fi/packages/stratum-tool).
+### Debian
 
-## Installation on Arch
+For Debian 7 (wheezy) there are experimental builds available
+[at my site](http://zouppen.iki.fi/packages/stratum-tool). Just like
+Ubuntu 12.04 build, this build lacks SSL support.
+
+### Arch
 
 StratumTool is available on the [AUR](https://aur.archlinux.org/packages/stratum-tool/).
 
@@ -97,28 +110,40 @@ converting bitcoin amounts to your currency. See
 [list of supported currencies](https://bitpay.com/bitcoin-exchange-rates). Example
 usage: `--currency EUR`.
 
+## Encryption
+
+SSL encryption is enabled by default without certificate
+checks. Electrum servers use self-signed certificates anyway so you
+should be a bit cautious if you connect over insecure network. You can
+force certificate check with `-S safessl` run time option. The
+encryption can be disabled at build time using `-ssl` flag which
+results much easier build-time dependencies.
+
 ## Compiling
 
-StratumTool is written in [Haskell](http://en.wikipedia.org/wiki/Haskell_%28programming_language%29) and can be built using Cabal:
+StratumTool is written in [Haskell](http://en.wikipedia.org/wiki/Haskell_%28programming_language%29)
+and can be built using Cabal.
 
-If you are running Debian or Ubuntu then you can install the
-dependencies using *apt* first which make the installation faster and also more
-robust (we like to avoid nasty dependency hell).
+If you are running Ubuntu and you like to build from sources I
+recommend adding our
+[PPA](https://launchpad.net/~zouppen/+archive/ubuntu/stratum-tool/)
+and installing all the build dependencies from there:
 
-	sudo apt-get install cabal-install ghc libghc-aeson-dev libghc-stm-dev libghc-cmdargs-dev libghc-network-dev
+```sh
+sudo apt-get build-dep stratum-tool
+```
 
-The following libraries may be fetched over Cabal so it's not fatal if
-you don't have them but if your distribution has them then it's better
-to use them, too:
+If PPA is not an option then I recommend using
+[Cabal with a sandbox](https://www.haskell.org/cabal/users-guide/installing-packages.html#developing-with-sandboxes).
+In the root directory of the source package, run:
 
-	sudo apt get install libghc-async-dev
+```sh
+cabal update
+cabal sandbox init
+cabal install
+```
 
-Then install via cabal
-
-	cabal update
-	cabal install
-
-The binaries will be placed at `~/.cabal/bin`
+The binaries will be placed at `.cabal/bin` inside the sandboxed source directory.
 
 ## License
 
