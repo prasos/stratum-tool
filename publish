@@ -6,7 +6,7 @@
 
 package () {
     echo Build number $1 for $2
-    sed -i "s/^\(haskell-stratum-tool ([.0-9]*\)[-a-z0-9]*) [a-z0-9]*/\1-$1$2) $2/" debian/changelog
+    sed -i "s/^\(haskell-[^ ]* ([.0-9]*\)[-a-z0-9]*) [a-z0-9]*/\1-$1$2) $2/" debian/changelog
     dpkg-buildpackage -S
 }
 
@@ -17,6 +17,10 @@ reset_timer () {
 find_new () {
     # Find files .changes files created after startflag file and upload them
     find .. -maxdepth 1 -name "$1" -and -cnewer debian/startflag -print0
+}
+
+debianize () {
+    cabal-debian '--maintainer=Joel Lehtonen <joel.lehtonen@koodilehto.fi>' --default-package stratum-tool "--flags=$1"
 }
 
 if test $# -ne 1; then
@@ -30,12 +34,15 @@ if ! test -e publish; then
 fi
 
 rm -rf debian/
-cabal-debian '--maintainer=Joel Lehtonen <joel.lehtonen@koodilehto.fi>' --default-package stratum-tool
+debianize ""
 
 # Build for Launchpad
 reset_timer
-for DISTRO in precise trusty utopic; do package $1 $DISTRO; done
-find_new '*.changes' | xargs -0 dput ppa:zouppen/stratum-tool 
+for DISTRO in trusty utopic; do package $1 $DISTRO; done
+# The following builds without SSL
+debianize "-ssl"
+for DISTRO in precise; do package $1 $DISTRO; done
+find_new '*.changes' | xargs -0 dput ppa:zouppen/stratum-tool
 
 # Build for Debian Wheezy using my guerilla build server :-D Please
 # note ssh agent forwarding. It uses rsync down there with my privileges.
