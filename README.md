@@ -105,14 +105,14 @@ When using `--json` option the output format is JSON:
 
 ## Currency conversion
 
-Since version 0.0.3 it is possible to use BitPay exchange rates for
+Since version 0.0.3, it is possible to use BitPay exchange rates for
 converting bitcoin amounts to your currency. See
 [list of supported currencies](https://bitpay.com/bitcoin-exchange-rates). Example
 usage: `--currency EUR`.
 
 ## Encryption
 
-SSL encryption is enabled by default without certificate
+Since version 0.0.4, SSL encryption is enabled by default without certificate
 checks. Electrum servers use self-signed certificates anyway so you
 should be a bit cautious if you connect over insecure network. You can
 force certificate check with `-S safessl` run time option. The
