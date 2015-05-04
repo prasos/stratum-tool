@@ -32,6 +32,7 @@ data Args = Args { server   :: String
                  , follow   :: Follow
                  , currency :: String
                  , security :: Security
+                 , accuracy :: String
                  } deriving (Show, Data, Typeable)
 
 synopsis =
@@ -59,6 +60,8 @@ synopsis =
                          \values: 'tcp' for unencrypted connection, \
                          \'ssl' for SSL without certificate check (default), \
                          \and 'safessl' for SSL with certificate check."
+       , accuracy = "0.01" &= typ "FLOAT" &=
+                    help "Accuracy of local currency. Default 0.01."
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.4"
@@ -76,15 +79,16 @@ main = do
   hSetBuffering stdout LineBuffering
   bitpay <- initBitpay
   let currencyText = T.toLower $ T.pack currency
+      accNumber = Number $ read accuracy
       printer ans = do
         -- First print the value as usual
         printValue json ans
         -- When currency conversion is needed, then update rates and
         -- print converted values if they contain any amounts.
-        when (currency /= "" && usefulValue (currencyInjector ans Nothing)) $ do
+        when (currency /= "" && usefulValue (currencyInjector accNumber ans Nothing)) $ do
           rates <- bitpay
           printValue json $
-            currencyInjector ans $ Just $ simpleRate rates currencyText
+            currencyInjector accNumber ans $ Just $ simpleRate rates currencyText
       act = if follow /= OneShot then trackAddresses else oneTime
     in act printer stratumConn args
 
@@ -135,8 +139,8 @@ objectZip ss vs = object $ zipWith toPair ss vs
 
 -- |Inject currency data recursively to given Value. Vacuum all other
 -- data from the JSON value.
-currencyInjector :: Value -> Maybe (Text, Value) -> Value
-currencyInjector v rate = recurse v
+currencyInjector :: Value -> Value -> Maybe (Text, Value) -> Value
+currencyInjector a v rate = recurse v
   where
     recurse (Object o) = Object $ H.filter usefulValue $ H.map conv $ H.filterWithKey isAmount o
     recurse (Array a) = Array $ V.filter usefulValue $ V.map recurse a
@@ -147,7 +151,7 @@ currencyInjector v rate = recurse v
     isAmount _ (Array _) = True
     isAmount _ _ = False
     -- conv converts all Numbers and recurses into others
-    conv (Number n) = maybe Null (inject $ Number n) rate
+    conv (Number n) = maybe Null (inject a $ Number n) rate
     conv v = recurse v
 
 -- |List of Stratum object key names which contain bitcoin amounts.
@@ -159,9 +163,10 @@ currencyFields = ["confirmed"
 
 -- |Converts given numeric value to Object containing amount in
 -- satoshis and given currency.
-inject :: Value -> (Text, Value) -> Value
-inject (Number n) (code, Number rate) =
-  object [(code, Number (n*rate*1e-8))]
+inject :: Value -> Value -> (Text, Value) -> Value
+inject (Number acc) (Number n) (code, Number rate) =
+  object [(code, Number $ roundAcc $ n*rate*1e-8)]
+  where roundAcc x = (fromIntegral $ round $ x / acc) * acc
 
 -- |Filter for removing empty objects and arrays.
 usefulValue :: Value -> Bool
