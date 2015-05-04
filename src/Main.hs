@@ -29,7 +29,7 @@ data Args = Args { server   :: String
                  , params   :: [String]
                  , multi    :: Bool
                  , json     :: Bool
-                 , follow   :: Bool
+                 , follow   :: Follow
                  , currency :: String
                  , security :: Security
                  } deriving (Show, Data, Typeable)
@@ -46,9 +46,11 @@ synopsis =
                       \command, repeat command for each argument"
        , json = def &=
                 help "Output as raw JSON instead of JSON breadcrumbs format"
-       , follow = def &=
+       , follow = OneShot &=
                   help "Subscribe to given addresses and run given command \
-                       \when something happens. Implies --multi."
+                       \when something happens. Option '-fs' prints initial \
+                       \value at start. Option '-ff' only follows future \
+                       \activity. Implies --multi."
        , currency = def &= typ "CODE" &=
                     help "Convert bitcoins to given currency using BitPay. \
                          \All currency codes supported by BitPay are available."
@@ -83,7 +85,8 @@ main = do
           rates <- bitpay
           printValue json $
             currencyInjector ans $ Just $ simpleRate rates currencyText
-  (if follow then trackAddresses else oneTime) printer stratumConn args
+      act = if follow /= OneShot then trackAddresses else oneTime
+    in act printer stratumConn args
 
 -- |Track changes in given addresses and run the command when changes
 -- occur.
@@ -93,7 +96,8 @@ trackAddresses printer stratumConn Args{..} = do
   -- Subscribe and collect the hashes for future comparison
   hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) params
   -- Print current state at first
-  oneTime printer stratumConn Args{multi=True,..}
+  when (follow == ShootAndFollow) $
+    oneTime printer stratumConn Args{multi=True,..}
   -- Listen for changes
   let loop m = do
         [addr,newHash] <- takeJSON <$> atomically (readTChan chan)
