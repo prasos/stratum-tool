@@ -33,7 +33,7 @@ data Args = Args { server   :: String
                  , follow   :: Follow
                  , currency :: String
                  , security :: Security
-                 , accuracy :: String
+                 , accuracy :: Int
                  , delimiter :: String
                  } deriving (Show, Data, Typeable)
 
@@ -62,8 +62,9 @@ synopsis =
                          \values: 'tcp' for unencrypted connection, \
                          \'ssl' for SSL without certificate check (default), \
                          \and 'safessl' for SSL with certificate check."
-       , accuracy = "0.01" &= typ "FLOAT" &=
-                    help "Accuracy of local currency. Default 0.01."
+       , accuracy = 2 &=
+                    help "Number of digits in local currency. Default: 2. May \
+                         \be negative or zero, too."
        , delimiter = "\n" &=
                      help "Delimiter to use between related values in \
                           \breadcrumbs format. Default: no delimeter, every \
@@ -85,7 +86,6 @@ main = do
   hSetBuffering stdout LineBuffering
   bitpay <- initBitpay
   let currencyText = T.toLower $ T.pack currency
-      accNumber = Number $ read accuracy
       (_, conv) = splitAliases params
       printer rawAns = do
         -- Convert names to aliases if there is any mapping
@@ -94,10 +94,10 @@ main = do
         printValue json delimiter ans
         -- When currency conversion is needed, then update rates and
         -- print converted values if they contain any amounts.
-        when (currency /= "" && usefulValue (currencyInjector accNumber ans Nothing)) $ do
+        when (currency /= "" && usefulValue (currencyInjector accuracy ans Nothing)) $ do
           rates <- bitpay
           printValue json delimiter $
-            currencyInjector accNumber ans $ Just $ simpleRate rates currencyText
+            currencyInjector accuracy ans $ Just $ simpleRate rates currencyText
         when (delimiter /= "\n") $ putChar '\n'
       act = if follow /= OneShot then trackAddresses else oneTime
     in act printer stratumConn args
@@ -151,7 +151,7 @@ objectZip ss vs = object $ zipWith toPair ss vs
 
 -- |Inject currency data recursively to given Value. Vacuum all other
 -- data from the JSON value.
-currencyInjector :: Value -> Value -> Maybe (Text, Value) -> Value
+currencyInjector :: Int -> Value -> Maybe (Text, Value) -> Value
 currencyInjector a v rate = recurse v
   where
     recurse (Object o) = Object $ H.filter usefulValue $ H.map conv $ H.filterWithKey isAmount o
@@ -181,10 +181,11 @@ topLevelAliasify _ x = x
 
 -- |Converts given numeric value to Object containing amount in
 -- satoshis and given currency.
-inject :: Value -> Value -> (Text, Value) -> Value
-inject (Number acc) (Number n) (code, Number rate) =
+inject :: Int -> Value -> (Text, Value) -> Value
+inject digits (Number n) (code, Number rate) =
   object [(code, Number $ roundAcc $ n*rate*1e-8)]
-  where roundAcc x = (fromIntegral $ round $ x / acc) * acc
+  where roundAcc x = (fromIntegral $ round $ x * a) / a
+        a = 10 ^^ digits
 
 -- |Filter for removing empty objects and arrays.
 usefulValue :: Value -> Bool
