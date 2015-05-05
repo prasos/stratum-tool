@@ -70,7 +70,7 @@ synopsis =
                           \value on a separate line"
        }
   &= program "stratum-tool"
-  &= summary "StratumTool v0.0.4"
+  &= summary "StratumTool v0.0.5"
   &= help "Connect to Electrum server via Stratum protocol and \
           \allows querying wallet balances etc."
 
