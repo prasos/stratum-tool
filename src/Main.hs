@@ -34,6 +34,7 @@ data Args = Args { server   :: String
                  , currency :: String
                  , security :: Security
                  , accuracy :: String
+                 , delimiter :: String
                  } deriving (Show, Data, Typeable)
 
 synopsis =
@@ -63,6 +64,10 @@ synopsis =
                          \and 'safessl' for SSL with certificate check."
        , accuracy = "0.01" &= typ "FLOAT" &=
                     help "Accuracy of local currency. Default 0.01."
+       , delimiter = "\n" &=
+                     help "Delimiter to use between related values in \
+                          \breadcrumbs format. Default: no delimeter, every \
+                          \value on a separate line"
        }
   &= program "stratum-tool"
   &= summary "StratumTool v0.0.4"
@@ -81,18 +86,19 @@ main = do
   bitpay <- initBitpay
   let currencyText = T.toLower $ T.pack currency
       accNumber = Number $ read accuracy
-      (_, conv) = splitAliases params 
+      (_, conv) = splitAliases params
       printer rawAns = do
         -- Convert names to aliases if there is any mapping
         let ans = topLevelAliasify conv rawAns
         -- First print the value as usual
-        printValue json ans
+        printValue json delimiter ans
         -- When currency conversion is needed, then update rates and
         -- print converted values if they contain any amounts.
         when (currency /= "" && usefulValue (currencyInjector accNumber ans Nothing)) $ do
           rates <- bitpay
-          printValue json $
+          printValue json delimiter $
             currencyInjector accNumber ans $ Just $ simpleRate rates currencyText
+        when (delimiter /= "\n") $ putChar '\n'
       act = if follow /= OneShot then trackAddresses else oneTime
     in act printer stratumConn args
 
@@ -131,11 +137,11 @@ oneTime printer stratumConn Args{..} = do
 
 -- |Prints given JSON value to stdout. When `json` is True, then just
 -- print as encoded to JSON, otherwise breadcrumbs format is used.
-printValue :: Bool -> Printer
-printValue json ans =
+printValue :: Bool -> String -> Printer
+printValue json delimiter ans =
   hPutBuilder stdout $ if json
                        then lazyByteString (encode ans) <> byteString "\n"
-                       else breadcrumbs ans
+                       else breadcrumbs delimiter ans
 
 -- |Pairs a given list of strings corresponding values to generate
 -- JSON object with string as a key.

@@ -11,33 +11,33 @@ import Data.Text (Text)
 import Data.Text.Encoding
 import qualified Data.Vector as V
 
-breadcrumbs :: Value -> Builder
+breadcrumbs :: String -> Value -> Builder
 breadcrumbs = breadcrumbs' True mempty mempty
 
-breadcrumbs' :: Bool -> Builder -> Builder -> Value -> Builder
-breadcrumbs' start path b v = case v of
+breadcrumbs' :: Bool -> Builder -> Builder -> String -> Value -> Builder
+breadcrumbs' start path b delimiter v = case v of
   Object o -> let m = takeJSON (Object o)
                   objPath = path <> if start then mempty else char7 '.'
               in if M.null m
                  then item $ byteString "{}"
-                 else M.foldlWithKey (objBuilder objPath) b m
+                 else M.foldlWithKey (objBuilder delimiter objPath) b m
   Array a -> if V.null a
              then item $ byteString "[]"
-             else V.ifoldl (arrayBuilder path) b a
+             else V.ifoldl (arrayBuilder delimiter path) b a
   _ -> item $ lazyByteString $ encode v
   where item x = b <>
                  path <>
                  (if start then mempty else byteString " = ") <>
                  lazyByteString (encode v) <>
-                 byteString "\n"
+                 stringUtf8 delimiter
 
-objBuilder :: Builder -> Builder -> Text -> Value -> Builder
-objBuilder path b k v = breadcrumbs' False newPath b v
+objBuilder :: String -> Builder -> Builder -> Text -> Value -> Builder
+objBuilder delimiter path b k v = breadcrumbs' False newPath b delimiter v
   where newPath = path <>
                   buildText k
 
-arrayBuilder :: Builder -> Builder -> Int -> Value -> Builder
-arrayBuilder path b i v = breadcrumbs' False newPath b v
+arrayBuilder :: String -> Builder -> Builder -> Int -> Value -> Builder
+arrayBuilder delimiter path b i v = breadcrumbs' False newPath b delimiter v
   where newPath = path <>
                   byteString "[" <>
                   string7 (show i) <>
