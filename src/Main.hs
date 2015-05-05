@@ -10,6 +10,7 @@ import Data.ByteString.Builder
 import qualified Data.HashMap.Strict as H
 import qualified Data.Map as M
 import qualified Data.Vector as V
+import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.String (fromString)
 import Data.Text as T (Text, pack, toLower)
@@ -80,7 +81,10 @@ main = do
   bitpay <- initBitpay
   let currencyText = T.toLower $ T.pack currency
       accNumber = Number $ read accuracy
-      printer ans = do
+      (_, conv) = splitAliases params 
+      printer rawAns = do
+        -- Convert names to aliases if there is any mapping
+        let ans = topLevelAliasify conv rawAns
         -- First print the value as usual
         printValue json ans
         -- When currency conversion is needed, then update rates and
@@ -98,7 +102,7 @@ trackAddresses :: Printer -> StratumConn -> Args -> IO ()
 trackAddresses printer stratumConn Args{..} = do
   chan <- stratumChan stratumConn "blockchain.address.subscribe"
   -- Subscribe and collect the hashes for future comparison
-  hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) params
+  hashes <- mapConcurrently (qv "blockchain.address.subscribe" . pure) names
   -- Print current state at first
   when (follow == ShootAndFollow) $
     oneTime printer stratumConn Args{multi=True,..}
@@ -110,18 +114,20 @@ trackAddresses printer stratumConn Args{..} = do
                   printer $ object [fromString addr .= newValue]
                   loop $ M.insert addr newHash m
           else loop m
-    in loop $ M.fromList $ zipWith mapify params hashes
+    in loop $ M.fromList $ zipWith mapify names hashes
   where qv = queryStratumValue stratumConn
         mapify a h = (a, takeJSON h)
+        names = fst $ splitAliases params
 
 -- |Process single request. 
 oneTime :: Printer -> StratumConn -> Args -> IO ()
 oneTime printer stratumConn Args{..} = do
   ans <- if multi
-         then objectZip params <$>
-              mapConcurrently (queryStratumValue stratumConn command . pure) params
-         else queryStratumValue stratumConn command params
+         then objectZip names <$>
+              mapConcurrently (queryStratumValue stratumConn command . pure) names
+         else queryStratumValue stratumConn command names
   printer ans
+  where names = fst $ splitAliases params
 
 -- |Prints given JSON value to stdout. When `json` is True, then just
 -- print as encoded to JSON, otherwise breadcrumbs format is used.
@@ -161,6 +167,12 @@ currencyFields = ["confirmed"
                  ,"value"
                  ]
 
+-- Renames top level object keys using given conversion function.
+topLevelAliasify :: (Text -> Text) -> Value -> Value
+topLevelAliasify conv (Object o) = Object $ H.fromList $ map mangle $ H.toList o
+  where mangle (k, v) = (conv k, v)
+topLevelAliasify _ x = x
+
 -- |Converts given numeric value to Object containing amount in
 -- satoshis and given currency.
 inject :: Value -> Value -> (Text, Value) -> Value
@@ -173,3 +185,18 @@ usefulValue :: Value -> Bool
 usefulValue (Object o) = not $ H.null o
 usefulValue (Array a) = not $ V.null a
 usefulValue _ = True
+
+-- |Parse argument using alias notation
+splitAlias :: String -> (String, Maybe (Text, Text))
+splitAlias s = case break (==':') s of
+  (name, "") -> (name, Nothing)
+  (alias, ':':name) -> (name, Just (T.pack name, T.pack alias))
+
+-- |Process a list of arguments and produce pair which has names in
+-- first element and alias conversion function as the second element)
+splitAliases :: [String] -> ([String], Text -> Text)
+splitAliases xs = (map fst pairs, lookupDef $ catMaybes $ map snd pairs)
+  where pairs = map splitAlias xs
+        lookupDef xs key = case lookup key xs of
+          Just x -> x
+          Nothing -> key
